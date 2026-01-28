@@ -6,14 +6,20 @@
 let isDarkMode = false;
 let currentLanguage = 'en';
 
-// DOM Elements
-const themeToggle = document.querySelector('.theme-toggle');
-const entryCards = document.querySelectorAll('.entry-card');
-const projectCards = document.querySelectorAll('.project-card');
-const projectSections = document.querySelectorAll('.project-section');
+// DOM element references (initialized on DOMContentLoaded)
+let themeToggle;
+let entryCards = [];
+let projectCards = [];
+let projectSections = [];
 
 // Initialize
 function init() {
+    // initialize element references now that DOM is ready
+    themeToggle = document.querySelector('.theme-toggle');
+    entryCards = Array.from(document.querySelectorAll('.entry-card'));
+    projectCards = Array.from(document.querySelectorAll('.project-card'));
+    projectSections = Array.from(document.querySelectorAll('.project-section'));
+
     initTheme();
     initThemeToggle();
     initLanguage();
@@ -24,7 +30,7 @@ function init() {
     initSmoothScroll();
     initScrollAnimations();
     initPageLoadAnimation();
-    initEditMode();
+    // 编辑模式已移除（不再初始化）
 }
 
 // Initialize Theme
@@ -52,8 +58,9 @@ function initLanguage() {
     if (savedLanguage) {
         currentLanguage = savedLanguage;
     } else {
-        // 强制默认使用中文
-        currentLanguage = 'zh';
+        // 默认根据浏览器语言设置（中文优先），否则使用英文
+        const lang = navigator.language || navigator.userLanguage || 'en';
+        currentLanguage = lang.startsWith('zh') ? 'zh' : 'en';
     }
     updatePageLanguage();
 }
@@ -650,16 +657,26 @@ function initAvatarUpload() {
             // 点击文件输入
             fileInput.click();
 
-            // 处理文件上传
+            // 处理文件上传，增加大小限制并在保存时容错
             fileInput.addEventListener('change', (e) => {
                 const file = e.target.files[0];
                 if (file) {
+                    const MAX_SIZE = 200 * 1024; // 200KB 限制
+                    if (file.size > MAX_SIZE) {
+                        alert(currentLanguage === 'zh' ? '图片过大，请选择小于200KB的图片。' : 'Image too large, please choose an image under 200KB.');
+                        document.body.removeChild(fileInput);
+                        return;
+                    }
                     const reader = new FileReader();
                     reader.onload = (event) => {
                         // 更新头像显示
                         portrait.style.backgroundImage = `url(${event.target.result})`;
-                        // 保存到localStorage
-                        localStorage.setItem('avatar', event.target.result);
+                        // 保存到localStorage（小文件才尝试保存）
+                        try {
+                            localStorage.setItem('avatar', event.target.result);
+                        } catch (err) {
+                            console.warn('Unable to save avatar to localStorage:', err);
+                        }
                     };
                     reader.readAsDataURL(file);
                 }
@@ -668,7 +685,7 @@ function initAvatarUpload() {
             });
         });
 
-        // 加载保存的头像
+        // 加载保存的头像（若可用且大小合理）
         const savedAvatar = localStorage.getItem('avatar');
         if (savedAvatar) {
             portrait.style.backgroundImage = `url(${savedAvatar})`;
@@ -679,727 +696,25 @@ function initAvatarUpload() {
     });
 }
 
-// Initialize all functions
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', init);
-} else {
+// Initialize all functions on DOMContentLoaded and run page-specific inits there
+document.addEventListener('DOMContentLoaded', () => {
     init();
-}
 
-// Additional Initialization for specific pages
-if (window.location.pathname.includes('index.html') || window.location.pathname === '/') {
-    document.addEventListener('DOMContentLoaded', initEntryCardNavigation);
-}
-
-if (window.location.pathname.includes('works.html')) {
-    document.addEventListener('DOMContentLoaded', initProjectCardNavigation);
-}
-
-// Edit Mode Functionality
-let isEditMode = false;
-
-// Initialize Edit Mode
-function initEditMode() {
-    // Add edit mode toggle button
-    addEditModeToggle();
-    
-    // Load saved content from localStorage
-    loadSavedContent();
-}
-
-// Add Edit Mode Toggle Button
-function addEditModeToggle() {
-    const headerContainer = document.querySelector('.header-container');
-    if (headerContainer) {
-        // Style the header container for better layout
-        headerContainer.style.cssText = `
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 1rem 2rem;
-            max-width: 1200px;
-            margin: 0 auto;
-            width: 100%;
-        `;
-        
-        // Create edit mode toggle container
-        const editModeToggle = document.createElement('div');
-        editModeToggle.className = 'edit-mode-toggle';
-        editModeToggle.style.cssText = `
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            margin-left: 1rem;
-            cursor: pointer;
-        `;
-        
-        // Create edit mode label with language support
-        const editModeLabel = document.createElement('span');
-        editModeLabel.textContent = currentLanguage === 'zh' ? '编辑模式' : 'Edit Mode';
-        editModeLabel.style.cssText = `
-            font-size: 0.875rem;
-            font-weight: 500;
-            color: inherit;
-            user-select: none;
-        `;
-        
-        // Create toggle switch
-        const toggleSwitch = document.createElement('div');
-        toggleSwitch.className = 'toggle-switch';
-        toggleSwitch.style.cssText = `
-            position: relative;
-            width: 44px;
-            height: 20px;
-            background-color: #d1d1d6;
-            border-radius: 10px;
-            transition: background-color 0.3s ease;
-        `;
-        
-        // Create toggle knob
-        const toggleKnob = document.createElement('div');
-        toggleKnob.className = 'toggle-knob';
-        toggleKnob.style.cssText = `
-            position: absolute;
-            top: 2px;
-            left: 2px;
-            width: 16px;
-            height: 16px;
-            background-color: white;
-            border-radius: 50%;
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-        `;
-        
-        // Assemble the toggle
-        toggleSwitch.appendChild(toggleKnob);
-        editModeToggle.appendChild(editModeLabel);
-        editModeToggle.appendChild(toggleSwitch);
-        
-        // Style the navigation links for better layout
-        const navLinks = document.querySelector('.nav-links');
-        if (navLinks) {
-            navLinks.style.cssText = `
-                display: flex;
-                gap: 2rem;
-                align-items: center;
-            `;
-        }
-        
-        // Style the language toggle
-        const languageToggle = document.querySelector('.language-toggle');
-        if (languageToggle) {
-            languageToggle.style.cssText = `
-                display: flex;
-                gap: 0.5rem;
-                margin-left: 2rem;
-            `;
-            
-            // Style language buttons
-            const languageBtns = languageToggle.querySelectorAll('.language-btn');
-            languageBtns.forEach(btn => {
-                btn.style.cssText = `
-                    padding: 0.375rem 0.75rem;
-                    border: 1px solid #d1d1d6;
-                    border-radius: 6px;
-                    background: transparent;
-                    color: inherit;
-                    font-size: 0.75rem;
-                    font-weight: 500;
-                    cursor: pointer;
-                    transition: all 0.2s ease;
-                `;
-            });
-        }
-        
-        // Style the theme toggle
-        const themeToggle = document.getElementById('theme-toggle');
-        if (themeToggle) {
-            themeToggle.style.cssText = `
-                width: 24px;
-                height: 24px;
-                margin-left: 1rem;
-                cursor: pointer;
-                background: transparent;
-                border: none;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-            `;
-        }
-        
-        // Add export button to access editor.html
-        const exportButton = document.createElement('a');
-        exportButton.href = 'editor.html';
-        exportButton.target = '_blank';
-        exportButton.rel = 'noopener noreferrer';
-        exportButton.textContent = currentLanguage === 'zh' ? '导出站点' : 'Export Site';
-        exportButton.style.cssText = `
-            padding: 0.375rem 0.75rem;
-            border: 1px solid #0071e3;
-            border-radius: 6px;
-            background: transparent;
-            color: #0071e3;
-            font-size: 0.75rem;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            margin-left: 1rem;
-            text-decoration: none;
-            display: inline-block;
-        `;
-        
-        // Insert after theme toggle
-        if (themeToggle) {
-            headerContainer.insertBefore(editModeToggle, themeToggle.nextSibling);
-            headerContainer.insertBefore(exportButton, editModeToggle.nextSibling);
-        }
-        
-        // Add click event
-        editModeToggle.addEventListener('click', () => {
-            isEditMode = !isEditMode;
-            toggleEditMode();
-        });
-        
-        // Update edit mode label and export button when language changes
-        window.addEventListener('languageChange', () => {
-            editModeLabel.textContent = currentLanguage === 'zh' ? '编辑模式' : 'Edit Mode';
-            exportButton.textContent = currentLanguage === 'zh' ? '导出站点' : 'Export Site';
-        });
+    if (window.location.pathname.includes('index.html') || window.location.pathname === '/') {
+        initEntryCardNavigation();
     }
-}
 
-// Toggle Edit Mode
-function toggleEditMode() {
-    const toggleSwitch = document.querySelector('.toggle-switch');
-    const toggleKnob = document.querySelector('.toggle-knob');
-    
-    if (isEditMode) {
-        // Enable edit mode
-        toggleSwitch.style.backgroundColor = '#0071e3';
-        toggleKnob.style.transform = 'translateX(24px)';
-        toggleKnob.style.boxShadow = '0 2px 6px rgba(0, 113, 227, 0.4)';
-        enableEditMode();
-    } else {
-        // Disable edit mode
-        toggleSwitch.style.backgroundColor = '#d1d1d6';
-        toggleKnob.style.transform = 'translateX(2px)';
-        toggleKnob.style.boxShadow = '0 1px 3px rgba(0, 0, 0, 0.1)';
-        disableEditMode();
+    if (window.location.pathname.includes('works.html')) {
+        initProjectCardNavigation();
     }
-}
+    // Ensure any leftover edit-mode UI is removed (feature disabled)
+    const editModeEls = document.querySelectorAll('.edit-mode-toggle, .bg-upload-btn');
+    editModeEls.forEach(el => el.remove());
+    const exportLink = document.querySelector('a[href="editor.html"]');
+    if (exportLink) exportLink.remove();
+});
 
-// Enable Edit Mode
-function enableEditMode() {
-    // Make hero title editable
-    makeHeroTitleEditable();
-    
-    // Make hero tagline editable
-    makeHeroTaglineEditable();
-    
-    // Make logo editable
-    makeLogoEditable();
-    
-    // Make about content editable
-    makeAboutContentEditable();
-    
-    // Make blog content editable
-    makeBlogContentEditable();
-    
-    // Make works content editable
-    makeWorksContentEditable();
-    
-    // Make general headings and paragraphs editable
-    makeHeadingsAndParagraphsEditable();
-    
-    // Add background image upload functionality
-    addBackgroundImageUpload();
-}
-
-// Disable Edit Mode
-function disableEditMode() {
-    // Revert editable elements to regular text
-    revertEditableElements();
-}
-
-// Make Hero Title Editable
-function makeHeroTitleEditable() {
-    const heroTitle = document.querySelector('.hero-title');
-    if (heroTitle) {
-        const currentText = heroTitle.textContent;
-        const input = document.createElement('input');
-        input.type = 'text';
-        input.value = currentText;
-        input.style.cssText = `
-            font-size: inherit;
-            font-weight: inherit;
-            color: inherit;
-            background: transparent;
-            border: 1px solid #0071e3;
-            border-radius: 4px;
-            padding: 0.5rem;
-            width: 100%;
-            max-width: 300px;
-        `;
-        
-        input.addEventListener('blur', () => {
-            heroTitle.textContent = input.value;
-            heroTitle.style.display = 'block';
-            input.remove();
-            // Save to localStorage
-            localStorage.setItem('heroTitle', input.value);
-        });
-        
-        heroTitle.style.display = 'none';
-        heroTitle.parentNode.insertBefore(input, heroTitle);
-        input.focus();
-    }
-}
-
-// Make Hero Tagline Editable
-function makeHeroTaglineEditable() {
-    const heroTagline = document.querySelector('.hero-tagline');
-    if (heroTagline) {
-        const currentText = heroTagline.textContent;
-        const input = document.createElement('input');
-        input.type = 'text';
-        input.value = currentText;
-        input.style.cssText = `
-            font-size: inherit;
-            color: inherit;
-            background: transparent;
-            border: 1px solid #0071e3;
-            border-radius: 4px;
-            padding: 0.5rem;
-            width: 100%;
-            max-width: 300px;
-        `;
-        
-        input.addEventListener('blur', () => {
-            heroTagline.textContent = input.value;
-            heroTagline.style.display = 'block';
-            input.remove();
-            // Save to localStorage
-            localStorage.setItem('heroTagline', input.value);
-        });
-        
-        heroTagline.style.display = 'none';
-        heroTagline.parentNode.insertBefore(input, heroTagline);
-        input.focus();
-    }
-}
-
-// Make Logo Editable
-function makeLogoEditable() {
-    const logo = document.querySelector('.logo');
-    if (logo) {
-        const currentText = logo.textContent;
-        const input = document.createElement('input');
-        input.type = 'text';
-        input.value = currentText;
-        input.style.cssText = `
-            font-size: inherit;
-            font-weight: inherit;
-            color: inherit;
-            background: transparent;
-            border: 1px solid #0071e3;
-            border-radius: 4px;
-            padding: 0.5rem;
-            width: 100%;
-            max-width: 150px;
-        `;
-        
-        input.addEventListener('blur', () => {
-            logo.textContent = input.value;
-            logo.style.display = 'block';
-            input.remove();
-            // Save to localStorage
-            localStorage.setItem('logoText', input.value);
-        });
-        
-        logo.style.display = 'none';
-        logo.parentNode.insertBefore(input, logo);
-        input.focus();
-    }
-}
-
-// Make About Content Editable
-function makeAboutContentEditable() {
-    const aboutParagraphs = document.querySelectorAll('.about-content p');
-    aboutParagraphs.forEach((p, index) => {
-        const currentText = p.textContent;
-        const textarea = document.createElement('textarea');
-        textarea.value = currentText;
-        textarea.style.cssText = `
-            font-size: inherit;
-            color: inherit;
-            background: transparent;
-            border: 1px solid #0071e3;
-            border-radius: 4px;
-            padding: 0.5rem;
-            width: 100%;
-            min-height: 100px;
-            resize: vertical;
-        `;
-        
-        textarea.addEventListener('blur', () => {
-            p.textContent = textarea.value;
-            p.style.display = 'block';
-            textarea.remove();
-            // Save to localStorage
-            const aboutContent = JSON.parse(localStorage.getItem('aboutContent') || '{}');
-            aboutContent[index] = textarea.value;
-            localStorage.setItem('aboutContent', JSON.stringify(aboutContent));
-        });
-        
-        p.style.display = 'none';
-        p.parentNode.insertBefore(textarea, p);
-        textarea.focus();
-    });
-}
-
-// Make Blog Content Editable
-function makeBlogContentEditable() {
-    const blogPosts = document.querySelectorAll('.blog-post');
-    blogPosts.forEach((post, postIndex) => {
-        // Make blog title editable
-        const blogTitle = post.querySelector('h3');
-        if (blogTitle) {
-            const currentTitle = blogTitle.textContent;
-            const input = document.createElement('input');
-            input.type = 'text';
-            input.value = currentTitle;
-            input.style.cssText = `
-                font-size: inherit;
-                font-weight: inherit;
-                color: inherit;
-                background: transparent;
-                border: 1px solid #0071e3;
-                border-radius: 4px;
-                padding: 0.5rem;
-                width: 100%;
-                max-width: 500px;
-            `;
-            
-            input.addEventListener('blur', () => {
-                blogTitle.textContent = input.value;
-                blogTitle.style.display = 'block';
-                input.remove();
-                // Save to localStorage
-                const blogContent = JSON.parse(localStorage.getItem('blogContent') || '{}');
-                if (!blogContent[postIndex]) blogContent[postIndex] = {};
-                blogContent[postIndex].title = input.value;
-                localStorage.setItem('blogContent', JSON.stringify(blogContent));
-            });
-            
-            blogTitle.style.display = 'none';
-            post.insertBefore(input, blogTitle);
-        }
-        
-        // Make blog date editable
-        const blogDate = post.querySelector('p:nth-child(2)');
-        if (blogDate) {
-            const currentDate = blogDate.textContent;
-            const input = document.createElement('input');
-            input.type = 'text';
-            input.value = currentDate;
-            input.style.cssText = `
-                font-size: inherit;
-                color: inherit;
-                background: transparent;
-                border: 1px solid #0071e3;
-                border-radius: 4px;
-                padding: 0.375rem;
-                width: 100%;
-                max-width: 200px;
-            `;
-            
-            input.addEventListener('blur', () => {
-                blogDate.textContent = input.value;
-                blogDate.style.display = 'block';
-                input.remove();
-                // Save to localStorage
-                const blogContent = JSON.parse(localStorage.getItem('blogContent') || '{}');
-                if (!blogContent[postIndex]) blogContent[postIndex] = {};
-                blogContent[postIndex].date = input.value;
-                localStorage.setItem('blogContent', JSON.stringify(blogContent));
-            });
-            
-            blogDate.style.display = 'none';
-            post.insertBefore(input, blogDate);
-        }
-        
-        // Make blog content editable
-        const blogParagraphs = post.querySelectorAll('p:not(:nth-child(2))');
-        blogParagraphs.forEach((p, paraIndex) => {
-            const currentText = p.textContent;
-            const textarea = document.createElement('textarea');
-            textarea.value = currentText;
-            textarea.style.cssText = `
-                font-size: inherit;
-                color: inherit;
-                background: transparent;
-                border: 1px solid #0071e3;
-                border-radius: 4px;
-                padding: 0.5rem;
-                width: 100%;
-                min-height: 80px;
-                resize: vertical;
-                margin-bottom: 0.5rem;
-            `;
-            
-            textarea.addEventListener('blur', () => {
-                p.textContent = textarea.value;
-                p.style.display = 'block';
-                textarea.remove();
-                // Save to localStorage
-                const blogContent = JSON.parse(localStorage.getItem('blogContent') || '{}');
-                if (!blogContent[postIndex]) blogContent[postIndex] = {};
-                if (!blogContent[postIndex].content) blogContent[postIndex].content = [];
-                blogContent[postIndex].content[paraIndex] = textarea.value;
-                localStorage.setItem('blogContent', JSON.stringify(blogContent));
-            });
-            
-            p.style.display = 'none';
-            post.insertBefore(textarea, p);
-        });
-    });
-}
-
-// Make Works Content Editable
-function makeWorksContentEditable() {
-    const projectCards = document.querySelectorAll('.project-card');
-    projectCards.forEach((card, index) => {
-        // Make project title editable
-        const projectTitle = card.querySelector('.project-title');
-        if (projectTitle) {
-            const currentTitle = projectTitle.textContent;
-            const input = document.createElement('input');
-            input.type = 'text';
-            input.value = currentTitle;
-            input.style.cssText = `
-                font-size: inherit;
-                font-weight: inherit;
-                color: inherit;
-                background: transparent;
-                border: 1px solid #0071e3;
-                border-radius: 4px;
-                padding: 0.5rem;
-                width: 100%;
-                max-width: 300px;
-            `;
-            
-            input.addEventListener('blur', () => {
-                projectTitle.textContent = input.value;
-                projectTitle.style.display = 'block';
-                input.remove();
-                // Save to localStorage
-                const worksContent = JSON.parse(localStorage.getItem('worksContent') || '{}');
-                if (!worksContent[index]) worksContent[index] = {};
-                worksContent[index].title = input.value;
-                localStorage.setItem('worksContent', JSON.stringify(worksContent));
-            });
-            
-            projectTitle.style.display = 'none';
-            card.insertBefore(input, projectTitle);
-        }
-        
-        // Make project tagline editable
-        const projectTagline = card.querySelector('.project-tagline');
-        if (projectTagline) {
-            const currentTagline = projectTagline.textContent;
-            const input = document.createElement('input');
-            input.type = 'text';
-            input.value = currentTagline;
-            input.style.cssText = `
-                font-size: inherit;
-                color: inherit;
-                background: transparent;
-                border: 1px solid #0071e3;
-                border-radius: 4px;
-                padding: 0.375rem;
-                width: 100%;
-                max-width: 400px;
-            `;
-            
-            input.addEventListener('blur', () => {
-                projectTagline.textContent = input.value;
-                projectTagline.style.display = 'block';
-                input.remove();
-                // Save to localStorage
-                const worksContent = JSON.parse(localStorage.getItem('worksContent') || '{}');
-                if (!worksContent[index]) worksContent[index] = {};
-                worksContent[index].tagline = input.value;
-                localStorage.setItem('worksContent', JSON.stringify(worksContent));
-            });
-            
-            projectTagline.style.display = 'none';
-            card.insertBefore(input, projectTagline);
-        }
-    });
-}
-
-// Add Background Image Upload
-function addBackgroundImageUpload() {
-    const body = document.body;
-    const uploadButton = document.createElement('button');
-    uploadButton.className = 'bg-upload-btn';
-    uploadButton.textContent = '上传背景图';
-    uploadButton.style.cssText = `
-        position: fixed;
-        bottom: 2rem;
-        right: 2rem;
-        padding: 0.75rem 1.5rem;
-        background-color: #0071e3;
-        color: white;
-        border: none;
-        border-radius: 8px;
-        cursor: pointer;
-        z-index: 1000;
-    `;
-    
-    const fileInput = document.createElement('input');
-    fileInput.type = 'file';
-    fileInput.accept = 'image/*';
-    fileInput.style.display = 'none';
-    
-    uploadButton.addEventListener('click', () => {
-        fileInput.click();
-    });
-    
-    fileInput.addEventListener('change', (e) => {
-        const file = e.target.files[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = (event) => {
-                // Update background image
-                const backgroundLayers = document.querySelectorAll('.background-layer');
-                if (backgroundLayers.length > 0) {
-                    backgroundLayers[0].style.backgroundImage = `url(${event.target.result})`;
-                }
-                // Save to localStorage
-                localStorage.setItem('backgroundImage', event.target.result);
-            };
-            reader.readAsDataURL(file);
-        }
-    });
-    
-    body.appendChild(uploadButton);
-    body.appendChild(fileInput);
-}
-
-// Make Headings and Paragraphs Editable
-function makeHeadingsAndParagraphsEditable() {
-    // Make h1 elements editable
-    const headings1 = document.querySelectorAll('h1:not(.hero-title)');
-    headings1.forEach((h1, index) => {
-        makeElementEditable(h1, 'h1', index);
-    });
-    
-    // Make h2 elements editable
-    const headings2 = document.querySelectorAll('h2');
-    headings2.forEach((h2, index) => {
-        makeElementEditable(h2, 'h2', index);
-    });
-    
-    // Make h3 elements editable
-    const headings3 = document.querySelectorAll('h3:not(.project-title)');
-    headings3.forEach((h3, index) => {
-        makeElementEditable(h3, 'h3', index);
-    });
-    
-    // Make p elements editable (exclude copyright text)
-    const paragraphs = document.querySelectorAll('p:not(.hero-tagline):not(.project-tagline):not(.footer-copyright)');
-    paragraphs.forEach((p, index) => {
-        // Skip copyright text
-        if (p.textContent.includes('©') && p.textContent.includes('保留所有权利')) {
-            return;
-        }
-        makeElementEditable(p, 'p', index);
-    });
-}
-
-// Make Element Editable
-function makeElementEditable(element, elementType, index) {
-    const currentText = element.textContent;
-    const input = document.createElement('input');
-    input.type = 'text';
-    input.value = currentText;
-    input.style.cssText = `
-        font-size: inherit;
-        font-weight: inherit;
-        color: inherit;
-        background: transparent;
-        border: 1px solid #0071e3;
-        border-radius: 4px;
-        padding: 0.5rem;
-        width: 100%;
-        max-width: 500px;
-    `;
-    
-    input.addEventListener('blur', () => {
-        element.textContent = input.value;
-        element.style.display = 'block';
-        input.remove();
-        // Save to localStorage
-        const elementContent = JSON.parse(localStorage.getItem('elementContent') || '{}');
-        if (!elementContent[elementType]) {
-            elementContent[elementType] = {};
-        }
-        elementContent[elementType][index] = input.value;
-        localStorage.setItem('elementContent', JSON.stringify(elementContent));
-    });
-    
-    element.style.display = 'none';
-    element.parentNode.insertBefore(input, element);
-    input.focus();
-}
-
-// Revert Editable Elements
-function revertEditableElements() {
-    // Remove any remaining input/textarea elements
-    const editableInputs = document.querySelectorAll('.hero-title + input, .hero-tagline + input, .logo + input, .about-content textarea, .blog-post input, .blog-post textarea, .project-card input, h1 + input, h2 + input, h3 + input, p + input');
-    editableInputs.forEach(input => {
-        input.remove();
-    });
-    
-    // Show original elements
-    const heroTitle = document.querySelector('.hero-title');
-    const heroTagline = document.querySelector('.hero-tagline');
-    const logo = document.querySelector('.logo');
-    const aboutParagraphs = document.querySelectorAll('.about-content p');
-    const blogTitles = document.querySelectorAll('.blog-post h3');
-    const blogDates = document.querySelectorAll('.blog-post p:nth-child(2)');
-    const blogParagraphs = document.querySelectorAll('.blog-post p:not(:nth-child(2))');
-    const projectTitles = document.querySelectorAll('.project-card .project-title');
-    const projectTaglines = document.querySelectorAll('.project-card .project-tagline');
-    const headings1 = document.querySelectorAll('h1');
-    const headings2 = document.querySelectorAll('h2');
-    const headings3 = document.querySelectorAll('h3');
-    const paragraphs = document.querySelectorAll('p');
-    
-    if (heroTitle) heroTitle.style.display = 'block';
-    if (heroTagline) heroTagline.style.display = 'block';
-    if (logo) logo.style.display = 'block';
-    aboutParagraphs.forEach(p => p.style.display = 'block');
-    blogTitles.forEach(title => title.style.display = 'block');
-    blogDates.forEach(date => date.style.display = 'block');
-    blogParagraphs.forEach(p => p.style.display = 'block');
-    projectTitles.forEach(title => title.style.display = 'block');
-    projectTaglines.forEach(tagline => tagline.style.display = 'block');
-    headings1.forEach(h1 => h1.style.display = 'block');
-    headings2.forEach(h2 => h2.style.display = 'block');
-    headings3.forEach(h3 => h3.style.display = 'block');
-    paragraphs.forEach(p => p.style.display = 'block');
-    
-    // Remove background upload button
-    const bgUploadBtn = document.querySelector('.bg-upload-btn');
-    if (bgUploadBtn) bgUploadBtn.remove();
-    
-    const fileInput = document.querySelector('input[type="file"][accept="image/*"]');
-    if (fileInput && fileInput.style.display === 'none') {
-        fileInput.remove();
-    }
-}
+// 编辑模式功能已移除（相关 UI 与交互在页面加载时被清理），保留内容加载/保存函数
 
 // Load Saved Content from localStorage
 function loadSavedContent() {
