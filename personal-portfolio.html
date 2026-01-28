@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Personal Portfolio</title>
+    <meta name="description" content="A showcase of my work and skills as a Full Stack Developer">
+    <style>
+        /* =====================
+           Base & Variables
+           ===================== */
+        :root {
+            /* Colors - Dark Mode Default */
+            --bg-primary: #0a0a0a;
+            --bg-secondary: #111111;
+            --bg-card: #161616;
+            --text-primary: #ededed;
+            --text-secondary: #a1a1a1;
+            --accent: #ffffff;
+            --border: #333333;
+            --border-hover: #666666;
+            
+            /* Spacing */
+            --space-xs: 0.5rem;
+            --space-s: 1rem;
+            --space-m: 2rem;
+            --space-l: 4rem;
+            --space-xl: 8rem;
+
+            /* Typography */
+            --font-main: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            --font-mono: "SF Mono", "Monaco", "Inconsolata", "Fira Mono", "Droid Sans Mono", "Source Code Pro", monospace;
+            
+            /* Effects */
+            --radius: 8px;
+            --shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+            --transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: var(--font-main);
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+            overflow-x: hidden;
+        }
+
+        a {
+            text-decoration: none;
+            color: inherit;
+            transition: var(--transition);
+        }
+
+        ul {
+            list-style: none;
+        }
+
+        /* =====================
+           Typography
+           ===================== */
+        h1, h2, h3, h4 {
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            line-height: 1.2;
+        }
+
+        h1 { font-size: 3.5rem; }
+        h2 { font-size: 2.5rem; margin-bottom: var(--space-m); }
+        h3 { font-size: 1.5rem; margin-bottom: var(--space-s); }
+        p { color: var(--text-secondary); margin-bottom: var(--space-s); }
+
+        .mono { font-family: var(--font-mono); font-size: 0.9rem; color: var(--text-secondary); }
+
+        /* =====================
+           Layout Utilities
+           ===================== */
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 0 var(--space-m);
+        }
+
+        section {
+            padding: var(--space-xl) 0;
+            opacity: 0; /* Changed by Intersection Observer */
+            transform: translateY(20px);
+            transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+        }
+
+        section.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* =====================
+           Components
+           ===================== */
+        /* Header / Nav */
+        header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            z-index: 1000;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            background: rgba(10, 10, 10, 0.7);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .nav-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 64px;
+        }
+
+        .logo {
+            font-weight: 700;
+            font-size: 1.2rem;
+        }
+
+        nav ul {
+            display: flex;
+            gap: var(--space-m);
+        }
+
+        nav a {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        nav a:hover {
+            color: var(--text-primary);
+        }
+
+        /* Hero */
+        #hero {
+            min-height: 90vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding-top: var(--space-xl);
+        }
+
+        .hero-role {
+            display: inline-block;
+            padding: 4px 12px;
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            font-size: 0.85rem;
+            margin-bottom: var(--space-m);
+            color: var(--text-secondary);
+        }
+
+        .hero-title {
+            font-size: 4.5rem;
+            background: linear-gradient(to right, #fff 0%, #aaa 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: var(--space-s);
+        }
+
+        .hero-slogan {
+            font-size: 1.5rem;
+            color: var(--text-secondary);
+            font-weight: 400;
+            margin-bottom: var(--space-l);
+            max-width: 600px;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 12px 24px;
+            background: var(--text-primary);
+            color: var(--bg-primary);
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 1rem;
+        }
+
+        .btn:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
+        }
+
+        /* About */
+        .bio-text {
+            font-size: 1.2rem;
+            line-height: 1.8;
+            max-width: 800px;
+        }
+
+        /* Skills */
+        .skills-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: var(--space-m);
+        }
+
+        .skill-category h3 {
+            font-size: 1.1rem;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: var(--space-xs);
+            margin-bottom: var(--space-s);
+        }
+
+        .skill-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .tag {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            transition: var(--transition);
+        }
+
+        .tag:hover {
+            border-color: var(--text-primary);
+            color: var(--text-primary);
+        }
+
+        /* Projects */
+        .projects-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: var(--space-m);
+        }
+
+        .card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: var(--space-m);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            transition: var(--transition);
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            border-color: var(--border-hover);
+            box-shadow: 0 10px 30px -15px rgba(0,0,0,1);
+        }
+
+        .card h3 {
+            margin-bottom: var(--space-xs);
+        }
+
+        .card-tech {
+            margin-top: var(--space-s);
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .card-tech span {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            font-family: var(--font-mono);
+        }
+
+        .card-link {
+            margin-top: var(--space-s);
+            font-size: 0.9rem;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+        }
+
+        .card-link::after {
+            content: "→";
+            margin-left: 4px;
+            transition: transform 0.2s;
+        }
+
+        .card-link:hover::after {
+            transform: translateX(4px);
+        }
+
+        /* Experience */
+        .timeline {
+            border-left: 2px solid var(--border);
+            padding-left: var(--space-m);
+            margin-left: 8px;
+        }
+
+        .timeline-item {
+            position: relative;
+            margin-bottom: var(--space-l);
+        }
+
+        .timeline-item::before {
+            content: "";
+            position: absolute;
+            left: calc(-1 * var(--space-m) - 5px);
+            top: 6px;
+            width: 8px;
+            height: 8px;
+            background: var(--text-primary);
+            border-radius: 50%;
+            outline: 4px solid var(--bg-primary);
+        }
+
+        .timeline-date {
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-bottom: 4px;
+            display: block;
+        }
+
+        /* Contact */
+        .contact-links {
+            display: flex;
+            gap: var(--space-m);
+            margin-bottom: var(--space-l);
+        }
+
+        .contact-form input, .contact-form textarea {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: var(--space-s);
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+            border-radius: 4px;
+            font-family: inherit;
+        }
+
+        .contact-form button {
+            cursor: pointer;
+            border: none;
+        }
+
+        /* Footer */
+        footer {
+            padding: var(--space-m) 0;
+            text-align: center;
+            border-top: 1px solid var(--border);
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            h1 { font-size: 3rem; }
+            .hero-title { font-size: 2.8rem; }
+            section { padding: var(--space-m) 0; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="container nav-container">
+            <div class="logo" id="nav-logo"></div>
+            <nav>
+                <ul>
+                    <li><a href="#about">About</a></li>
+                    <li><a href="#projects">Work</a></li>
+                    <li><a href="#contact">Contact</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container">
+        <!-- Hero Section -->
+        <section id="hero">
+            <div class="hero-role" id="hero-role"></div>
+            <h1 class="hero-title" id="hero-name"></h1>
+            <p class="hero-slogan" id="hero-slogan"></p>
+            <div>
+                <a href="#projects" class="btn">查看作品</a>
+            </div>
+        </section>
+
+        <!-- About Section -->
+        <section id="about">
+            <h2>About</h2>
+            <div class="bio-text" id="bio-text"></div>
+        </section>
+
+        <!-- Skills Section -->
+        <section id="skills">
+            <h2>Skills</h2>
+            <div class="skills-grid" id="skills-container">
+                <!-- Injected via JS -->
+            </div>
+        </section>
+
+        <!-- Experience Section -->
+        <section id="experience">
+            <h2>Experience</h2>
+            <div class="timeline" id="experience-container">
+                <!-- Injected via JS -->
+            </div>
+        </section>
+
+        <!-- Projects Section -->
+        <section id="projects">
+            <h2>Selected Projects</h2>
+            <div class="projects-grid" id="projects-container">
+                <!-- Injected via JS -->
+            </div>
+        </section>
+
+        <!-- Contact Section -->
+        <section id="contact">
+            <h2>Contact</h2>
+            <p>随时欢迎交流技术或工作机会。</p>
+            <div class="contact-links" id="contact-links">
+                <!-- Injected via JS -->
+            </div>
+            
+            <form class="contact-form" onsubmit="event.preventDefault(); alert('感谢您的留言！这只是一个静态演示表单。');">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-s);">
+                    <input type="text" placeholder="Name" required>
+                    <input type="email" placeholder="Email" required>
+                </div>
+                <textarea placeholder="Message" rows="5" required></textarea>
+                <button type="submit" class="btn">发送邮件</button>
+            </form>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>© 2026 Crafted with precision.</p>
+        </div>
+    </footer>
+
+    <script>
+        /* =====================
+           内容配置区（唯一需要修改的地方）
+           ===================== */
+        const CONFIG = {
+            user: {
+                name: "陶恒轩",
+                title: "Full Stack Engineer / UX Enthusiast /Software Engineering / Product Thinking / System Design",
+                slogan: "KEEP LEARNING, KEEP BUILDING.",
+                bio: "武汉大学软件工程本科在读。我以工程能力为基础，关注系统设计、产品逻辑与用户体验的整体协同。既能从代码层面构建稳定、高性能的实现，也习惯从产品与规则层面拆解问题，设计可持续的交互与成长闭环。对“系统如何长期运转”保持长期兴趣。",
+                contact: {
+                    email: "2728347417@qq.com",
+                    github: "https://github.com/IvoryThule",
+                    //linkedin: "https://linkedin.com/in/taohengxuan"
+                }
+            },
+            skills: {
+                "Engineering": [
+                    "HTML / CSS / JavaScript",
+                    "TypeScript",
+                    "Vue 3 / React",
+                    "前端工程化与性能优化",
+                    "Node.js / Web API"
+                ],
+                "Product & Design": [
+                    "需求分析与问题拆解",
+                    "产品结构设计",
+                    "用户体验与交互逻辑",
+                    "原型设计（Figma）"
+                ],
+                "System Thinking": [
+                    "系统与规则建模",
+                    "数值与资源循环分析",
+                    "复杂系统拆解与抽象",
+                    "数据驱动优化思维"
+                ],
+                "Tools & Platforms": [
+                    "Git",
+                    "Docker",
+                    "Figma",
+                    "Linux"
+                ]
+            },
+            projects: [
+                {
+                    title: "闻道 · AI 学习平台",
+                    description: "一个面向学生的智能学习平台项目。我参与并主导了学生端的交互设计与系统拆解，从学习目标出发，将长期学习过程拆分为可反馈、可迭代的使用路径；在实现层面负责主要前端交互与多轮迭代优化，项目最终进入试运行并获得校级实训二等奖。",
+                    tech: ["Vue 3", "TypeScript", "系统设计", "产品规划"],
+                    link: "https://github.com/Alexander-Porter/AgentEducator"
+                },
+                {
+                    title: "珞珈云 · 云端文件同步系统",
+                    description: "大一暑期实训作品，围绕“本地编辑—自动同步—多端访问”的核心体验设计整体流程，从产品视角定义关键使用场景，并在实现阶段参与前端与交互逻辑构建，关注一致性与用户操作的确定性。",
+                    tech: ["前端工程", "产品结构设计", "同步逻辑抽象"],
+                    link: "https://github.com/orgs/LawPlusThree/repositories"
+                },
+                {
+                    title: "《鸣潮》经济系统与养成结构拆解（腾讯IEG实训项目）",
+                    description: "对开放世界二次元游戏《鸣潮》的货币结构、体力与养成系统进行系统化拆解，分析资源投放与玩家决策路径，并构建风险—回报循环模型，用于验证系统长期稳定性与体验节奏。",
+                    tech: ["系统分析", "数值建模", "玩家行为研究"],
+                    link: "#"
+                }
+            ],
+            experiences: [
+                {
+                    period: "2023.09 - 至今",
+                    role: "软件工程 本科",
+                    org: "武汉大学",
+                    description: "主修数据结构、算法、软件工程等课程。多次参与综合性项目与实训，关注工程实现、系统设计与产品逻辑之间的协同。"
+                },
+                {
+                    period: "2024 - 2025",
+                    role: "项目核心成员",
+                    org: "软件工程综合实训",
+                    description: "参与并主导多个综合项目的设计与实现，项目在交互体验、系统完整性与落地效果上获得校级实训二等奖（两次）。"
+                },
+                {
+                    period: "2023.07 - 2023.08",
+                    role: "实习生",
+                    org: "腾讯互动娱乐事业群（IEG）",
+                    description: "参与《鸣潮》经济系统与养成结构拆解项目，负责系统分析与数值建模，构建资源循环与玩家决策模型，评估系统长期稳定性。"
+                },
+                {
+                    period: "2024.09 - 2025.09",
+                    role: "核心组织成员",
+                    org: "武汉大学电竞社（王者荣耀分部）",
+                    description: "参与并组织多场校级赛事，负责赛事结构与流程设计，在实践中持续观察玩家行为与规则对体验的影响。"
+                }
+            ]
+        };
+
+        /* =====================
+           Logic & Rendering
+           ===================== */
+        document.addEventListener('DOMContentLoaded', () => {
+            renderContent();
+            initAnimations();
+            consoleEasterEgg();
+        });
+
+        function renderContent() {
+            // Header & Hero
+            document.title = `${CONFIG.user.name} - Portfolio`;
+            document.getElementById('nav-logo').textContent = CONFIG.user.name.split(' ')[0]; // First name as logo
+            document.getElementById('hero-role').textContent = CONFIG.user.title;
+            document.getElementById('hero-name').textContent = CONFIG.user.name;
+            document.getElementById('hero-slogan').textContent = CONFIG.user.slogan;
+            document.getElementById('bio-text').textContent = CONFIG.user.bio;
+
+            // Skills
+            const skillsContainer = document.getElementById('skills-container');
+            for (const [category, items] of Object.entries(CONFIG.skills)) {
+                const col = document.createElement('div');
+                col.className = 'skill-category';
+                col.innerHTML = `
+                    <h3>${category}</h3>
+                    <div class="skill-tags">
+                        ${items.map(skill => `<span class="tag">${skill}</span>`).join('')}
+                    </div>
+                `;
+                skillsContainer.appendChild(col);
+            }
+
+            // Experiences
+            const expContainer = document.getElementById('experience-container');
+            CONFIG.experiences.forEach(exp => {
+                const item = document.createElement('div');
+                item.className = 'timeline-item';
+                item.innerHTML = `
+                    <span class="timeline-date">${exp.period}</span>
+                    <h3>${exp.role} @ ${exp.org}</h3>
+                    <p>${exp.description}</p>
+                `;
+                expContainer.appendChild(item);
+            });
+
+            // Projects
+            const projContainer = document.getElementById('projects-container');
+            CONFIG.projects.forEach(proj => {
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.innerHTML = `
+                    <div>
+                        <h3>${proj.title}</h3>
+                        <p>${proj.description}</p>
+                    </div>
+                    <div>
+                        <div class="card-tech">
+                            ${proj.tech.map(t => `<span>#${t}</span>`).join('')}
+                        </div>
+                        <a href="${proj.link}" class="card-link">View Project</a>
+                    </div>
+                `;
+                projContainer.appendChild(card);
+            });
+
+            // Contact
+            const contactLinks = document.getElementById('contact-links');
+            const { contact } = CONFIG.user;
+            if (contact.email) contactLinks.innerHTML += `<a href="mailto:${contact.email}" class="btn" style="background:var(--bg-secondary); border:1px solid var(--border); color:var(--text-primary)">Email</a>`;
+            if (contact.github) contactLinks.innerHTML += `<a href="${contact.github}" target="_blank" class="btn" style="background:var(--bg-secondary); border:1px solid var(--border); color:var(--text-primary)">GitHub</a>`;
+            if (contact.linkedin) contactLinks.innerHTML += `<a href="${contact.linkedin}" target="_blank" class="btn" style="background:var(--bg-secondary); border:1px solid var(--border); color:var(--text-primary)">LinkedIn</a>`;
+        }
+
+        function initAnimations() {
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                    }
+                });
+            }, { threshold: 0.1 });
+
+            document.querySelectorAll('section').forEach(section => {
+                observer.observe(section);
+            });
+        }
+
+        function consoleEasterEgg() {
+            const styles = [
+                'color: #fff',
+                'background: #000',
+                'font-size: 14px',
+                'padding: 10px',
+                'border-radius: 4px'
+            ].join(';');
+            console.log(`%c👋 Hi there! Looking at the source code?\nCheck out the CONFIG object at the top of the script to customize this portfolio.\nLet's build something great together.`, styles);
+        }
+    </script>
+</body>
+</html>

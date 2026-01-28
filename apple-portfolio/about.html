@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About - IvoryThule</title>
+    <meta name="description" content="About IvoryThule - Design Engineer based in Hong Kong">
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <div class="header-container">
+            <div class="logo">IvoryThule</div>
+            <nav>
+                <div class="nav-links">
+                    <a href="index.html" class="nav-link">Home</a>
+                    <a href="about.html" class="nav-link">About</a>
+                    <a href="works.html" class="nav-link">Works</a>
+                    <a href="writing.html" class="nav-link">Writing</a>
+                </div>
+            </nav>
+            <div class="language-toggle">
+                <button class="language-btn" data-lang="en">EN</button>
+                <button class="language-btn" data-lang="zh">中文</button>
+            </div>
+            <div class="theme-toggle" id="theme-toggle"></div>
+        </div>
+    </header>
+
+    <!-- About Section -->
+    <section class="about">
+        <div class="container">
+            <h2>About</h2>
+            <div class="about-container">
+                <!-- About Content -->
+                <div class="about-content">
+                    <p class="fade-in-up">Hello, I'm IvoryThule, a design engineer based in Hong Kong. I specialize in creating digital products that balance beautiful design with technical excellence.</p>
+                    
+                    <p class="fade-in-up">With over 8 years of experience in the industry, I've worked with startups, agencies, and Fortune 500 companies to bring innovative products to life. My approach combines user-centered design principles with clean, efficient engineering practices.</p>
+                    
+                    <p class="fade-in-up">I believe that great design is not just about aesthetics, but about creating meaningful experiences that solve real problems. Every project I work on starts with a deep understanding of the user's needs and ends with a polished product that exceeds expectations.</p>
+                    
+                    <p class="fade-in-up">When I'm not designing or coding, you can find me exploring the vibrant streets of Hong Kong, capturing moments with my camera, or experimenting with new recipes in the kitchen.</p>
+                    
+                    <h3 class="fade-in-up">Skills</h3>
+                    <p class="fade-in-up">Design: UI/UX Design, Interaction Design, Prototyping, Visual Design<br>
+                    Development: HTML, CSS, JavaScript, React, Node.js, TypeScript<br>
+                    Tools: Figma, Sketch, Adobe Creative Suite, VS Code, Git</p>
+                </div>
+                
+                <!-- Portrait -->
+                <div class="about-image">
+                    <div class="portrait fade-in-up"></div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="footer-container">
+            <div class="footer-links">
+                <a href="mailto:hello@ivory.design" class="footer-link">Email</a>
+                <a href="https://twitter.com/IvoryThule" class="footer-link">Twitter</a>
+                <a href="https://linkedin.com/in/IvoryThule" class="footer-link">LinkedIn</a>
+                <a href="https://github.com/IvoryThule" class="footer-link">GitHub</a>
+            </div>
+            <p class="footer-copyright">© 2026 IvoryThule. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script src="js/background.js"></script>
+    <script src="js/main.js"></script>
+    <script>
+        // About Page Specific Animations
+        document.addEventListener('DOMContentLoaded', () => {
+            const fadeElements = document.querySelectorAll('.fade-in-up');
+            fadeElements.forEach((element, index) => {
+                setTimeout(() => {
+                    element.style.opacity = '0';
+                    element.style.transform = 'translateY(30px)';
+                    element.style.transition = 'opacity 0.8s ease-out, transform 0.8s ease-out';
+                    
+                    setTimeout(() => {
+                        element.style.opacity = '1';
+                        element.style.transform = 'translateY(0)';
+                    }, 50);
+                }, index * 200);
+            });
+        });
+    </script>
+</body>
+</html>

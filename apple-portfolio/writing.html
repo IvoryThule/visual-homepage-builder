@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Writing - IvoryThule</title>
+    <meta name="description" content="Writing by IvoryThule - Thoughts on design, technology, and creative process">
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <div class="header-container">
+            <div class="logo">IvoryThule</div>
+            <nav>
+                <div class="nav-links">
+                    <a href="index.html" class="nav-link">Home</a>
+                    <a href="about.html" class="nav-link">About</a>
+                    <a href="works.html" class="nav-link">Works</a>
+                    <a href="writing.html" class="nav-link">Writing</a>
+                </div>
+            </nav>
+            <div class="language-toggle">
+                <button class="language-btn" data-lang="en">EN</button>
+                <button class="language-btn" data-lang="zh">中文</button>
+            </div>
+            <div class="theme-toggle" id="theme-toggle"></div>
+        </div>
+    </header>
+
+    <!-- Writing Section -->
+    <section class="about">
+        <div class="container">
+            <h2>Writing</h2>
+            <p>Thoughts on design, technology, and creative process</p>
+            
+            <div style="max-width: 800px; margin: 0 auto;">
+                <!-- Article 1 -->
+                <div class="fade-in-up" style="margin-bottom: var(--space-2xl);">
+                    <h3>The Future of UI Design</h3>
+                    <p style="color: var(--color-gray); font-size: 0.9rem; margin-bottom: var(--space-m);">March 15, 2026</p>
+                    <p>Exploring the evolving landscape of user interface design and how emerging technologies are shaping the future of digital experiences. From AI-powered interfaces to immersive AR/VR experiences, the future of UI design is more exciting than ever.</p>
+                    <a href="#" class="read-more">Read More</a>
+                </div>
+                
+                <!-- Article 2 -->
+                <div class="fade-in-up" style="margin-bottom: var(--space-2xl);">
+                    <h3>Designing for Accessibility</h3>
+                    <p style="color: var(--color-gray); font-size: 0.9rem; margin-bottom: var(--space-m);">February 28, 2026</p>
+                    <p>Creating digital products that are accessible to everyone is not just a legal requirement, but a moral imperative. This article explores best practices for designing accessible interfaces and the impact it has on user experience.</p>
+                    <a href="#" class="read-more">Read More</a>
+                </div>
+                
+                <!-- Article 3 -->
+                <div class="fade-in-up" style="margin-bottom: var(--space-2xl);">
+                    <h3>The Role of Design Systems</h3>
+                    <p style="color: var(--color-gray); font-size: 0.9rem; margin-bottom: var(--space-m);">January 20, 2026</p>
+                    <p>Design systems have become an essential tool for modern product teams. This article discusses how design systems can improve collaboration, consistency, and efficiency in the design and development process.</p>
+                    <a href="#" class="read-more">Read More</a>
+                </div>
+                
+                <!-- Article 4 -->
+                <div class="fade-in-up" style="margin-bottom: var(--space-2xl);">
+                    <h3>Mindfulness in Design</h3>
+                    <p style="color: var(--color-gray); font-size: 0.9rem; margin-bottom: var(--space-m);">December 10, 2025</p>
+                    <p>In a world of constant distractions, designing with mindfulness can create more meaningful experiences. This article explores how mindfulness principles can be applied to the design process and the impact it has on users.</p>
+                    <a href="#" class="read-more">Read More</a>
+                </div>
+                
+                <!-- Article 5 -->
+                <div class="fade-in-up">
+                    <h3>The Ethics of AI in Design</h3>
+                    <p style="color: var(--color-gray); font-size: 0.9rem; margin-bottom: var(--space-m);">November 5, 2025</p>
+                    <p>As AI becomes more integrated into the design process, it's important to consider the ethical implications. This article discusses the responsible use of AI in design and the potential impact on creativity and human connection.</p>
+                    <a href="#" class="read-more">Read More</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="footer-container">
+            <div class="footer-links">
+                <a href="mailto:hello@ivory.design" class="footer-link">Email</a>
+                <a href="https://twitter.com/IvoryThule" class="footer-link">Twitter</a>
+                <a href="https://linkedin.com/in/IvoryThule" class="footer-link">LinkedIn</a>
+                <a href="https://github.com/IvoryThule" class="footer-link">GitHub</a>
+            </div>
+            <p class="footer-copyright">© 2026 IvoryThule. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script src="js/background.js"></script>
+    <script src="js/main.js"></script>
+    <script>
+        // Writing Page Specific Animations
+        document.addEventListener('DOMContentLoaded', () => {
+            const fadeElements = document.querySelectorAll('.fade-in-up');
+            fadeElements.forEach((element, index) => {
+                setTimeout(() => {
+                    element.style.opacity = '0';
+                    element.style.transform = 'translateY(30px)';
+                    element.style.transition = 'opacity 0.8s ease-out, transform 0.8s ease-out';
+                    
+                    setTimeout(() => {
+                        element.style.opacity = '1';
+                        element.style.transform = 'translateY(0)';
+                    }, 50);
+                }, index * 200);
+            });
+        });
+    </script>
+</body>
+</html>

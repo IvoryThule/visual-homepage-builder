@@ -1,0 +1,1077 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>个人主页模板</title>
+    <meta name="description" content="新拟物化风格个人主页模板">
+    <style>
+        /* =====================
+           Base & Variables
+           ===================== */
+        :root {
+            /* 新拟物化设计变量 */
+            --bg-primary: #e6e7ee;
+            --bg-secondary: #e6e7ee;
+            --bg-card: #e6e7ee;
+            --text-primary: #44476a;
+            --text-secondary: #6b6e94;
+            --accent: #6c63ff;
+            --shadow-light: 8px 8px 16px #b8b9be, -8px -8px 16px #ffffff;
+            --shadow-dark: 4px 4px 8px #b8b9be, -4px -4px 8px #ffffff;
+            --shadow-inset: inset 2px 2px 5px #b8b9be, inset -3px -3px 7px #ffffff;
+            --border-radius: 16px;
+            --border-radius-sm: 8px;
+            --border-radius-full: 50%;
+            
+            /* 暗色主题变量 */
+            --dark-bg-primary: #1e1e2e;
+            --dark-bg-secondary: #252537;
+            --dark-bg-card: #252537;
+            --dark-text-primary: #e6e7ee;
+            --dark-text-secondary: #a1a1b5;
+            --dark-accent: #8a83ff;
+            --dark-shadow-light: 8px 8px 16px #1a1a27, -8px -8px 16px #242437;
+            --dark-shadow-dark: 4px 4px 8px #1a1a27, -4px -4px 8px #242437;
+            --dark-shadow-inset: inset 2px 2px 5px #1a1a27, inset -3px -3px 7px #242437;
+            
+            /* Spacing */
+            --space-xs: 0.5rem;
+            --space-s: 1rem;
+            --space-m: 2rem;
+            --space-l: 3rem;
+            --space-xl: 5rem;
+
+            /* Typography */
+            --font-main: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            --font-mono: "SF Mono", "Monaco", "Inconsolata", "Fira Mono", "Droid Sans Mono", "Source Code Pro", monospace;
+            
+            /* Effects */
+            --transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: var(--font-main);
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+            overflow-x: hidden;
+            transition: var(--transition);
+        }
+
+        /* 暗色主题 */
+        body.dark-theme {
+            --bg-primary: var(--dark-bg-primary);
+            --bg-secondary: var(--dark-bg-secondary);
+            --bg-card: var(--dark-bg-card);
+            --text-primary: var(--dark-text-primary);
+            --text-secondary: var(--dark-text-secondary);
+            --accent: var(--dark-accent);
+            --shadow-light: var(--dark-shadow-light);
+            --shadow-dark: var(--dark-shadow-dark);
+            --shadow-inset: var(--dark-shadow-inset);
+        }
+
+        a {
+            text-decoration: none;
+            color: inherit;
+            transition: var(--transition);
+        }
+
+        ul {
+            list-style: none;
+        }
+
+        /* =====================
+           Typography
+           ===================== */
+        h1, h2, h3, h4 {
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            line-height: 1.2;
+            color: var(--text-primary);
+        }
+
+        h1 { font-size: 3.5rem; }
+        h2 { font-size: 2.5rem; margin-bottom: var(--space-m); }
+        h3 { font-size: 1.5rem; margin-bottom: var(--space-s); }
+        p { color: var(--text-secondary); margin-bottom: var(--space-s); }
+
+        .mono { font-family: var(--font-mono); font-size: 0.9rem; color: var(--text-secondary); }
+
+        /* =====================
+           Layout Utilities
+           ===================== */
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 0 var(--space-m);
+        }
+
+        section {
+            padding: var(--space-xl) 0;
+            opacity: 0; /* Changed by Intersection Observer */
+            transform: translateY(20px);
+            transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+        }
+
+        section.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* =====================
+           Components
+           ===================== */
+        /* Header / Nav */
+        header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            z-index: 1000;
+            background: var(--bg-primary);
+            transition: var(--transition);
+        }
+
+        .nav-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 80px;
+        }
+
+        .logo {
+            font-weight: 700;
+            font-size: 1.5rem;
+            color: var(--text-primary);
+        }
+
+        .nav-controls {
+            display: flex;
+            align-items: center;
+            gap: var(--space-s);
+        }
+
+        nav ul {
+            display: flex;
+            gap: var(--space-m);
+        }
+
+        nav a {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            position: relative;
+        }
+
+        nav a:hover {
+            color: var(--text-primary);
+        }
+
+        nav a::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: var(--accent);
+            transition: var(--transition);
+        }
+
+        nav a:hover::after {
+            width: 100%;
+        }
+
+        /* 新拟物化按钮 */
+        .btn {
+            display: inline-block;
+            padding: 12px 24px;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            border-radius: var(--border-radius-sm);
+            font-weight: 600;
+            font-size: 1rem;
+            box-shadow: var(--shadow-dark);
+            transition: var(--transition);
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn:hover {
+            box-shadow: var(--shadow-light);
+            transform: translateY(-2px);
+        }
+
+        .btn:active {
+            box-shadow: var(--shadow-inset);
+            transform: translateY(0);
+        }
+
+        .btn-accent {
+            background: var(--accent);
+            color: white;
+            box-shadow: var(--shadow-dark);
+        }
+
+        .btn-accent:hover {
+            box-shadow: var(--shadow-light);
+        }
+
+        /* 主题切换按钮 */
+        .theme-toggle {
+            width: 50px;
+            height: 26px;
+            background: var(--bg-primary);
+            border-radius: 13px;
+            box-shadow: var(--shadow-inset);
+            position: relative;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .theme-toggle::after {
+            content: '';
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            width: 20px;
+            height: 20px;
+            background: var(--accent);
+            border-radius: 50%;
+            box-shadow: var(--shadow-dark);
+            transition: var(--transition);
+        }
+
+        body.dark-theme .theme-toggle::after {
+            transform: translateX(24px);
+        }
+
+        /* 语言切换按钮 */
+        .lang-toggle {
+            background: var(--bg-primary);
+            border: none;
+            color: var(--text-secondary);
+            padding: 6px 12px;
+            border-radius: var(--border-radius-sm);
+            box-shadow: var(--shadow-dark);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .lang-toggle:hover {
+            color: var(--text-primary);
+            box-shadow: var(--shadow-light);
+        }
+
+        /* Hero */
+        #hero {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding-top: var(--space-xl);
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* 动态背景 */
+        .bg-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            opacity: 0.5;
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 1;
+        }
+
+        .hero-role {
+            display: inline-block;
+            padding: 8px 20px;
+            background: var(--bg-primary);
+            border-radius: 25px;
+            font-size: 0.9rem;
+            margin-bottom: var(--space-m);
+            color: var(--text-secondary);
+            box-shadow: var(--shadow-dark);
+        }
+
+        .hero-title {
+            font-size: 4.5rem;
+            color: var(--text-primary);
+            margin-bottom: var(--space-s);
+            line-height: 1.1;
+        }
+
+        .hero-slogan {
+            font-size: 1.5rem;
+            color: var(--text-secondary);
+            font-weight: 400;
+            margin-bottom: var(--space-l);
+            max-width: 600px;
+        }
+
+        /* About */
+        .about-content {
+            background: var(--bg-card);
+            padding: var(--space-m);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-light);
+        }
+
+        .bio-text {
+            font-size: 1.2rem;
+            line-height: 1.8;
+            max-width: 800px;
+        }
+
+        /* Skills */
+        .skills-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: var(--space-m);
+        }
+
+        .skill-category {
+            background: var(--bg-card);
+            padding: var(--space-m);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-light);
+            transition: var(--transition);
+        }
+
+        .skill-category:hover {
+            box-shadow: var(--shadow-dark);
+            transform: translateY(-5px);
+        }
+
+        .skill-category h3 {
+            font-size: 1.1rem;
+            margin-bottom: var(--space-s);
+            color: var(--text-primary);
+        }
+
+        .skill-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .tag {
+            background: var(--bg-primary);
+            padding: 6px 12px;
+            border-radius: var(--border-radius-sm);
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            box-shadow: var(--shadow-inset);
+            transition: var(--transition);
+        }
+
+        .tag:hover {
+            box-shadow: var(--shadow-dark);
+            color: var(--text-primary);
+        }
+
+        /* Experience */
+        .timeline {
+            position: relative;
+            padding-left: var(--space-m);
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: var(--bg-card);
+            box-shadow: var(--shadow-inset);
+            border-radius: 1px;
+        }
+
+        .timeline-item {
+            position: relative;
+            margin-bottom: var(--space-l);
+            background: var(--bg-card);
+            padding: var(--space-m);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-light);
+            transition: var(--transition);
+        }
+
+        .timeline-item:hover {
+            box-shadow: var(--shadow-dark);
+            transform: translateY(-5px);
+        }
+
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: calc(-1 * var(--space-m) - 5px);
+            top: 24px;
+            width: 12px;
+            height: 12px;
+            background: var(--accent);
+            border-radius: 50%;
+            box-shadow: var(--shadow-dark);
+        }
+
+        .timeline-date {
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-bottom: var(--space-xs);
+            display: block;
+        }
+
+        /* Projects */
+        .projects-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: var(--space-m);
+        }
+
+        .card {
+            background: var(--bg-card);
+            border-radius: var(--border-radius);
+            padding: var(--space-m);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            box-shadow: var(--shadow-light);
+            transition: var(--transition);
+        }
+
+        .card:hover {
+            box-shadow: var(--shadow-dark);
+            transform: translateY(-5px);
+        }
+
+        .card h3 {
+            margin-bottom: var(--space-xs);
+            color: var(--text-primary);
+        }
+
+        .card-tech {
+            margin-top: var(--space-s);
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .card-tech span {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            font-family: var(--font-mono);
+            background: var(--bg-primary);
+            padding: 4px 8px;
+            border-radius: var(--border-radius-sm);
+            box-shadow: var(--shadow-inset);
+        }
+
+        .card-link {
+            margin-top: var(--space-s);
+            font-size: 0.9rem;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            color: var(--accent);
+            transition: var(--transition);
+        }
+
+        .card-link::after {
+            content: "→";
+            margin-left: 4px;
+            transition: transform 0.2s;
+        }
+
+        .card-link:hover::after {
+            transform: translateX(4px);
+        }
+
+        /* Contact */
+        .contact-content {
+            background: var(--bg-card);
+            padding: var(--space-m);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-light);
+        }
+
+        .contact-links {
+            display: flex;
+            gap: var(--space-m);
+            margin-bottom: var(--space-l);
+            flex-wrap: wrap;
+        }
+
+        .contact-form input, .contact-form textarea {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: var(--space-s);
+            background: var(--bg-primary);
+            border: none;
+            color: var(--text-primary);
+            border-radius: var(--border-radius-sm);
+            font-family: inherit;
+            box-shadow: var(--shadow-inset);
+            transition: var(--transition);
+        }
+
+        .contact-form input:focus, .contact-form textarea:focus {
+            outline: none;
+            box-shadow: var(--shadow-inset);
+        }
+
+        .contact-form button {
+            cursor: pointer;
+            border: none;
+        }
+
+        /* Footer */
+        footer {
+            padding: var(--space-m) 0;
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            background: var(--bg-card);
+            box-shadow: var(--shadow-inset);
+        }
+
+        /* 新拟物化卡片 */
+        .neo-card {
+            background: var(--bg-card);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-light);
+            transition: var(--transition);
+        }
+
+        .neo-card:hover {
+            box-shadow: var(--shadow-dark);
+            transform: translateY(-5px);
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            h1 { font-size: 3rem; }
+            .hero-title { font-size: 2.8rem; }
+            section { padding: var(--space-l) 0; }
+            .nav-container {
+                flex-direction: column;
+                height: auto;
+                padding: var(--space-s) 0;
+                gap: var(--space-s);
+            }
+            .nav-controls {
+                flex-direction: column;
+                gap: var(--space-xs);
+            }
+            nav ul {
+                gap: var(--space-s);
+            }
+            .contact-links {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="container nav-container">
+            <div class="logo">LOGO</div>
+            <div class="nav-controls">
+                <nav>
+                    <ul>
+                        <li><a href="#about">关于</a></li>
+                        <li><a href="#skills">技能</a></li>
+                        <li><a href="#projects">作品</a></li>
+                        <li><a href="#contact">联系</a></li>
+                    </ul>
+                </nav>
+                <div class="theme-toggle" id="theme-toggle"></div>
+                <button class="lang-toggle" id="lang-toggle">EN</button>
+            </div>
+        </div>
+    </header>
+
+    <main class="container">
+        <!-- Hero Section -->
+        <section id="hero">
+            <canvas class="bg-canvas" id="bg-canvas"></canvas>
+            <div class="hero-content">
+                <div class="hero-role" id="hero-role">这里是职位</div>
+                <h1 class="hero-title" id="hero-name">这里是名字</h1>
+                <p class="hero-slogan" id="hero-slogan">这里是个人标语</p>
+                <div>
+                    <a href="#projects" class="btn btn-accent">查看作品</a>
+                    <a href="#contact" class="btn" style="margin-left: 10px;">联系我</a>
+                </div>
+            </div>
+        </section>
+
+        <!-- About Section -->
+        <section id="about">
+            <h2>关于我</h2>
+            <div class="about-content">
+                <div class="bio-text" id="bio-text">这里是个人简介，介绍自己的背景、经历和兴趣爱好等。可以详细描述自己的专业技能、项目经验和个人特点。</div>
+            </div>
+        </section>
+
+        <!-- Skills Section -->
+        <section id="skills">
+            <h2>技能</h2>
+            <div class="skills-grid" id="skills-container">
+                <!-- Injected via JS -->
+            </div>
+        </section>
+
+        <!-- Experience Section -->
+        <section id="experience">
+            <h2>经历</h2>
+            <div class="timeline" id="experience-container">
+                <!-- Injected via JS -->
+            </div>
+        </section>
+
+        <!-- Projects Section -->
+        <section id="projects">
+            <h2>作品</h2>
+            <div class="projects-grid" id="projects-container">
+                <!-- Injected via JS -->
+            </div>
+        </section>
+
+        <!-- Contact Section -->
+        <section id="contact">
+            <h2>联系</h2>
+            <div class="contact-content">
+                <p>随时欢迎交流技术或工作机会。</p>
+                <div class="contact-links" id="contact-links">
+                    <!-- Injected via JS -->
+                </div>
+                
+                <form class="contact-form" onsubmit="event.preventDefault(); alert('感谢您的留言！这只是一个静态演示表单。');">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-s);">
+                        <input type="text" placeholder="姓名" required>
+                        <input type="email" placeholder="邮箱" required>
+                    </div>
+                    <textarea placeholder="留言" rows="5" required></textarea>
+                    <button type="submit" class="btn btn-accent">发送邮件</button>
+                </form>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>© 2026 个人主页模板</p>
+        </div>
+    </footer>
+
+    <script>
+        /* =====================
+           内容配置区（唯一需要修改的地方）
+           ===================== */
+        const CONFIG = {
+            lang: {
+                zh: {
+                    nav: {
+                        about: "关于",
+                        skills: "技能",
+                        projects: "作品",
+                        contact: "联系"
+                    },
+                    hero: {
+                        role: "这里是职位",
+                        name: "这里是名字",
+                        slogan: "这里是个人标语"
+                    },
+                    about: {
+                        title: "关于我",
+                        bio: "这里是个人简介，介绍自己的背景、经历和兴趣爱好等。可以详细描述自己的专业技能、项目经验和个人特点。"
+                    },
+                    skills: {
+                        title: "技能"
+                    },
+                    experience: {
+                        title: "经历"
+                    },
+                    projects: {
+                        title: "作品",
+                        view: "查看作品"
+                    },
+                    contact: {
+                        title: "联系",
+                        intro: "随时欢迎交流技术或工作机会。",
+                        name: "姓名",
+                        email: "邮箱",
+                        message: "留言",
+                        send: "发送邮件"
+                    },
+                    footer: "© 2026 个人主页模板"
+                },
+                en: {
+                    nav: {
+                        about: "About",
+                        skills: "Skills",
+                        projects: "Projects",
+                        contact: "Contact"
+                    },
+                    hero: {
+                        role: "Here is Role",
+                        name: "Here is Name",
+                        slogan: "Here is Slogan"
+                    },
+                    about: {
+                        title: "About Me",
+                        bio: "Here is personal introduction, introducing your background, experience and interests. You can detailedly describe your professional skills, project experience and personal characteristics."
+                    },
+                    skills: {
+                        title: "Skills"
+                    },
+                    experience: {
+                        title: "Experience"
+                    },
+                    projects: {
+                        title: "Projects",
+                        view: "View Projects"
+                    },
+                    contact: {
+                        title: "Contact",
+                        intro: "Welcome to communicate about technology or job opportunities at any time.",
+                        name: "Name",
+                        email: "Email",
+                        message: "Message",
+                        send: "Send Email"
+                    },
+                    footer: "© 2026 Personal Portfolio Template"
+                }
+            },
+            user: {
+                contact: {
+                    email: "example@example.com",
+                    github: "https://github.com",
+                    linkedin: "https://linkedin.com"
+                }
+            },
+            skills: {
+                "前端开发": [
+                    "HTML / CSS / JavaScript",
+                    "React / Vue",
+                    "TypeScript",
+                    "响应式设计",
+                    "性能优化"
+                ],
+                "后端开发": [
+                    "Node.js",
+                    "Express / Koa",
+                    "数据库设计",
+                    "API开发",
+                    "服务器部署"
+                ],
+                "工具与平台": [
+                    "Git",
+                    "Docker",
+                    "VS Code",
+                    "Linux",
+                    "CI/CD"
+                ],
+                "其他技能": [
+                    "UI/UX设计",
+                    "项目管理",
+                    "团队协作",
+                    "问题解决",
+                    "学习能力"
+                ]
+            },
+            projects: [
+                {
+                    title: "项目名称 1",
+                    description: "这里是项目描述，详细介绍项目的功能、技术栈和实现效果。",
+                    tech: ["React", "Node.js", "MongoDB"],
+                    link: "#"
+                },
+                {
+                    title: "项目名称 2",
+                    description: "这里是项目描述，详细介绍项目的功能、技术栈和实现效果。",
+                    tech: ["Vue", "Express", "MySQL"],
+                    link: "#"
+                },
+                {
+                    title: "项目名称 3",
+                    description: "这里是项目描述，详细介绍项目的功能、技术栈和实现效果。",
+                    tech: ["React Native", "Firebase"],
+                    link: "#"
+                }
+            ],
+            experiences: [
+                {
+                    period: "2023 - 至今",
+                    role: "前端开发工程师",
+                    org: "公司名称",
+                    description: "这里是工作经历描述，详细介绍工作内容、职责和成就。"
+                },
+                {
+                    period: "2021 - 2023",
+                    role: "全栈开发工程师",
+                    org: "公司名称",
+                    description: "这里是工作经历描述，详细介绍工作内容、职责和成就。"
+                },
+                {
+                    period: "2019 - 2021",
+                    role: "实习生",
+                    org: "公司名称",
+                    description: "这里是实习经历描述，详细介绍实习内容、职责和收获。"
+                }
+            ]
+        };
+
+        /* =====================
+           Logic & Rendering
+           ===================== */
+        let currentLang = 'zh';
+        let isDarkTheme = false;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            initTheme();
+            initLanguage();
+            renderContent();
+            initAnimations();
+            initCanvasBackground();
+            initEventListeners();
+        });
+
+        function initTheme() {
+            // 检查本地存储中的主题设置
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme === 'dark' || (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                document.body.classList.add('dark-theme');
+                isDarkTheme = true;
+            }
+        }
+
+        function initLanguage() {
+            // 检查本地存储中的语言设置
+            const savedLang = localStorage.getItem('lang');
+            if (savedLang) {
+                currentLang = savedLang;
+                document.getElementById('lang-toggle').textContent = currentLang.toUpperCase();
+            }
+        }
+
+        function renderContent() {
+            const lang = CONFIG.lang[currentLang];
+            
+            // Header & Hero
+            document.title = `个人主页模板`;
+            document.querySelector('nav ul li:nth-child(1) a').textContent = lang.nav.about;
+            document.querySelector('nav ul li:nth-child(2) a').textContent = lang.nav.skills;
+            document.querySelector('nav ul li:nth-child(3) a').textContent = lang.nav.projects;
+            document.querySelector('nav ul li:nth-child(4) a').textContent = lang.nav.contact;
+            document.getElementById('hero-role').textContent = lang.hero.role;
+            document.getElementById('hero-name').textContent = lang.hero.name;
+            document.getElementById('hero-slogan').textContent = lang.hero.slogan;
+            document.querySelector('#hero .btn-accent').textContent = lang.projects.view;
+            document.querySelector('#hero .btn:not(.btn-accent)').textContent = lang.nav.contact;
+            
+            // About
+            document.querySelector('#about h2').textContent = lang.about.title;
+            document.getElementById('bio-text').textContent = lang.about.bio;
+            
+            // Skills
+            document.querySelector('#skills h2').textContent = lang.skills.title;
+            const skillsContainer = document.getElementById('skills-container');
+            skillsContainer.innerHTML = '';
+            for (const [category, items] of Object.entries(CONFIG.skills)) {
+                const col = document.createElement('div');
+                col.className = 'skill-category';
+                col.innerHTML = `
+                    <h3>${category}</h3>
+                    <div class="skill-tags">
+                        ${items.map(skill => `<span class="tag">${skill}</span>`).join('')}
+                    </div>
+                `;
+                skillsContainer.appendChild(col);
+            }
+            
+            // Experience
+            document.querySelector('#experience h2').textContent = lang.experience.title;
+            const expContainer = document.getElementById('experience-container');
+            expContainer.innerHTML = '';
+            CONFIG.experiences.forEach(exp => {
+                const item = document.createElement('div');
+                item.className = 'timeline-item';
+                item.innerHTML = `
+                    <span class="timeline-date">${exp.period}</span>
+                    <h3>${exp.role} @ ${exp.org}</h3>
+                    <p>${exp.description}</p>
+                `;
+                expContainer.appendChild(item);
+            });
+            
+            // Projects
+            document.querySelector('#projects h2').textContent = lang.projects.title;
+            const projContainer = document.getElementById('projects-container');
+            projContainer.innerHTML = '';
+            CONFIG.projects.forEach(proj => {
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.innerHTML = `
+                    <div>
+                        <h3>${proj.title}</h3>
+                        <p>${proj.description}</p>
+                    </div>
+                    <div>
+                        <div class="card-tech">
+                            ${proj.tech.map(t => `<span>${t}</span>`).join('')}
+                        </div>
+                        <a href="${proj.link}" class="card-link">查看项目</a>
+                    </div>
+                `;
+                projContainer.appendChild(card);
+            });
+            
+            // Contact
+            document.querySelector('#contact h2').textContent = lang.contact.title;
+            document.querySelector('#contact p').textContent = lang.contact.intro;
+            const contactLinks = document.getElementById('contact-links');
+            contactLinks.innerHTML = '';
+            const { contact } = CONFIG.user;
+            if (contact.email) contactLinks.innerHTML += `<a href="mailto:${contact.email}" class="btn">Email</a>`;
+            if (contact.github) contactLinks.innerHTML += `<a href="${contact.github}" target="_blank" class="btn">GitHub</a>`;
+            if (contact.linkedin) contactLinks.innerHTML += `<a href="${contact.linkedin}" target="_blank" class="btn">LinkedIn</a>`;
+            
+            const formInputs = document.querySelectorAll('.contact-form input, .contact-form textarea');
+            formInputs[0].placeholder = lang.contact.name;
+            formInputs[1].placeholder = lang.contact.email;
+            formInputs[2].placeholder = lang.contact.message;
+            document.querySelector('.contact-form button').textContent = lang.contact.send;
+            
+            // Footer
+            document.querySelector('footer p').textContent = lang.footer;
+        }
+
+        function initAnimations() {
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                    }
+                });
+            }, { threshold: 0.1 });
+
+            document.querySelectorAll('section').forEach(section => {
+                observer.observe(section);
+            });
+        }
+
+        function initCanvasBackground() {
+            const canvas = document.getElementById('bg-canvas');
+            const ctx = canvas.getContext('2d');
+            
+            // 设置canvas尺寸
+            function resizeCanvas() {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+            }
+            
+            resizeCanvas();
+            window.addEventListener('resize', resizeCanvas);
+            
+            // 粒子系统
+            const particles = [];
+            const particleCount = 50;
+            
+            for (let i = 0; i < particleCount; i++) {
+                particles.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    size: Math.random() * 3 + 1,
+                    speedX: Math.random() * 0.5 - 0.25,
+                    speedY: Math.random() * 0.5 - 0.25,
+                    color: isDarkTheme ? '#8a83ff' : '#6c63ff'
+                });
+            }
+            
+            function animate() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                
+                particles.forEach(particle => {
+                    ctx.fillStyle = particle.color;
+                    ctx.beginPath();
+                    ctx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    particle.x += particle.speedX;
+                    particle.y += particle.speedY;
+                    
+                    if (particle.x < 0 || particle.x > canvas.width) {
+                        particle.speedX *= -1;
+                    }
+                    if (particle.y < 0 || particle.y > canvas.height) {
+                        particle.speedY *= -1;
+                    }
+                });
+                
+                // 连接粒子
+                particles.forEach((particle, index) => {
+                    particles.slice(index + 1).forEach(otherParticle => {
+                        const dx = particle.x - otherParticle.x;
+                        const dy = particle.y - otherParticle.y;
+                        const distance = Math.sqrt(dx * dx + dy * dy);
+                        
+                        if (distance < 100) {
+                            ctx.beginPath();
+                            ctx.strokeStyle = `${particle.color}${Math.floor((1 - distance / 100) * 100).toString(16).padStart(2, '0')}`;
+                            ctx.lineWidth = 0.5;
+                            ctx.moveTo(particle.x, particle.y);
+                            ctx.lineTo(otherParticle.x, otherParticle.y);
+                            ctx.stroke();
+                        }
+                    });
+                });
+                
+                requestAnimationFrame(animate);
+            }
+            
+            animate();
+        }
+
+        function initEventListeners() {
+            // 主题切换
+            document.getElementById('theme-toggle').addEventListener('click', () => {
+                document.body.classList.toggle('dark-theme');
+                isDarkTheme = !isDarkTheme;
+                localStorage.setItem('theme', isDarkTheme ? 'dark' : 'light');
+                initCanvasBackground(); // 重新初始化背景
+            });
+            
+            // 语言切换
+            document.getElementById('lang-toggle').addEventListener('click', () => {
+                currentLang = currentLang === 'zh' ? 'en' : 'zh';
+                document.getElementById('lang-toggle').textContent = currentLang.toUpperCase();
+                localStorage.setItem('lang', currentLang);
+                renderContent();
+            });
+        }
+    </script>
+</body>
+</html>
