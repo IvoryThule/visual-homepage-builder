@@ -55,7 +55,7 @@ function initLanguage() {
         // 强制默认使用中文
         currentLanguage = 'zh';
     }
-    updateLanguageUI();
+    updatePageLanguage();
 }
 
 // Language Toggle
@@ -69,8 +69,11 @@ function initLanguageToggle() {
                 if (lang !== currentLanguage) {
                     currentLanguage = lang;
                     localStorage.setItem('language', lang);
-                    updateLanguageUI();
-                    updatePageContent();
+                    updatePageLanguage();
+                    
+                    // Trigger language change event
+                    const languageChangeEvent = new Event('languageChange');
+                    window.dispatchEvent(languageChangeEvent);
                 }
             });
         });
@@ -87,6 +90,16 @@ function updateLanguageUI() {
             btn.classList.remove('active');
         }
     });
+}
+
+// Update Page Language
+function updatePageLanguage() {
+    updateLanguageUI();
+    updatePageContent();
+    
+    // Trigger language change event
+    const languageChangeEvent = new Event('languageChange');
+    window.dispatchEvent(languageChangeEvent);
 }
 
 // Update Page Content
@@ -117,10 +130,8 @@ function updatePageContent() {
                     'Hello, I\'m IvoryThule, a design engineer based in Hong Kong. I specialize in creating digital products that balance beautiful design with technical excellence.',
                     'With over 8 years of experience in the industry, I\'ve worked with startups, agencies, and Fortune 500 companies to bring innovative products to life. My approach combines user-centered design principles with clean, efficient engineering practices.',
                     'I believe that great design is not just about aesthetics, but about creating meaningful experiences that solve real problems. Every project I work on starts with a deep understanding of the user\'s needs and ends with a polished product that exceeds expectations.',
-                    'When I\'m not designing or coding, you can find me exploring the vibrant streets of Hong Kong, capturing moments with my camera, or experimenting with new recipes in the kitchen.',
-                    'Skills'
-                ],
-                skills: 'Design: UI/UX Design, Interaction Design, Prototyping, Visual Design\nDevelopment: HTML, CSS, JavaScript, React, Node.js, TypeScript\nTools: Figma, Sketch, Adobe Creative Suite, VS Code, Git'
+                    'When I\'m not designing or coding, you can find me exploring the vibrant streets of Hong Kong, capturing moments with my camera, or experimenting with new recipes in the kitchen.'
+                ]
             },
             works: {
                 title: 'Works',
@@ -195,7 +206,7 @@ function updatePageContent() {
                 home: '首页',
                 about: '关于',
                 works: '作品',
-                writing: '写作'
+                writing: '博客'
             },
             hero: {
                 tagline: '设计工程师 · 香港'
@@ -205,7 +216,7 @@ function updatePageContent() {
                 aboutDesc: '了解我的背景、技能和设计工程方法',
                 works: '作品',
                 worksDesc: '探索我的数字产品和设计项目组合',
-                writing: '写作',
+                writing: '博客',
                 writingDesc: '阅读我对设计、技术和创意过程的思考'
             },
             about: {
@@ -214,10 +225,8 @@ function updatePageContent() {
                     '你好，我是IvoryThule，一位来自香港的设计工程师。我专注于创建平衡美观设计与技术卓越的数字产品。',
                     '凭借超过8年的行业经验，我曾与初创公司、机构和财富500强公司合作，将创新产品变为现实。我的方法结合了以用户为中心的设计原则和简洁高效的工程实践。',
                     '我相信优秀的设计不仅仅关乎美学，更关乎创造解决实际问题的有意义体验。我参与的每个项目都始于对用户需求的深刻理解，终于超越期望的精致产品。',
-                    '当我不设计或编码时，你可以发现我在探索香港充满活力的街道，用相机捕捉瞬间，或在厨房尝试新食谱。',
-                    '技能'
-                ],
-                skills: '设计：UI/UX设计、交互设计、原型设计、视觉设计\n开发：HTML、CSS、JavaScript、React、Node.js、TypeScript\n工具：Figma、Sketch、Adobe创意套件、VS Code、Git'
+                    '当我不设计或编码时，你可以发现我在探索香港充满活力的街道，用相机捕捉瞬间，或在厨房尝试新食谱。'
+                ]
             },
             works: {
                 title: '作品',
@@ -272,7 +281,7 @@ function updatePageContent() {
                 }
             },
             writing: {
-                title: '写作',
+                title: '博客',
                 subtitle: '关于设计、技术和创意过程的思考',
                 articles: [
                     { title: 'UI设计的未来', date: '2026年3月15日', content: '探索用户界面设计的不断发展的格局，以及新兴技术如何塑造数字体验的未来。从AI驱动的界面到沉浸式AR/VR体验，UI设计的未来比以往任何时候都更加令人兴奋。' },
@@ -327,8 +336,6 @@ function updatePageContent() {
         aboutParagraphs.forEach((p, index) => {
             if (index < aboutContent.length) {
                 p.textContent = aboutContent[index];
-            } else if (index === aboutContent.length) {
-                p.textContent = translations[currentLanguage].about.skills;
             }
         });
     }
@@ -597,13 +604,16 @@ function initEntryCardNavigation() {
             
             switch (cardTitle) {
                 case 'About':
+                case '关于':
                     targetUrl = 'about.html';
                     break;
                 case 'Works':
+                case '作品':
                     targetUrl = 'works.html';
                     break;
-                case 'Writing':
-                    targetUrl = 'writing.html';
+                case 'Blog':
+                case '博客':
+                    targetUrl = 'blog.html';
                     break;
                 default:
                     targetUrl = '#';
@@ -701,53 +711,159 @@ function initEditMode() {
 function addEditModeToggle() {
     const headerContainer = document.querySelector('.header-container');
     if (headerContainer) {
+        // Style the header container for better layout
+        headerContainer.style.cssText = `
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1rem 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+            width: 100%;
+        `;
+        
+        // Create edit mode toggle container
         const editModeToggle = document.createElement('div');
         editModeToggle.className = 'edit-mode-toggle';
-        editModeToggle.innerHTML = '<span>编辑模式</span>';
         editModeToggle.style.cssText = `
-            position: relative;
-            display: inline-block;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
             margin-left: 1rem;
             cursor: pointer;
         `;
         
+        // Create edit mode label with language support
+        const editModeLabel = document.createElement('span');
+        editModeLabel.textContent = currentLanguage === 'zh' ? '编辑模式' : 'Edit Mode';
+        editModeLabel.style.cssText = `
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: inherit;
+            user-select: none;
+        `;
+        
+        // Create toggle switch
         const toggleSwitch = document.createElement('div');
         toggleSwitch.className = 'toggle-switch';
         toggleSwitch.style.cssText = `
             position: relative;
-            width: 50px;
-            height: 24px;
-            background-color: #ccc;
-            border-radius: 12px;
-            transition: background-color 0.3s;
+            width: 44px;
+            height: 20px;
+            background-color: #d1d1d6;
+            border-radius: 10px;
+            transition: background-color 0.3s ease;
         `;
         
+        // Create toggle knob
         const toggleKnob = document.createElement('div');
         toggleKnob.className = 'toggle-knob';
         toggleKnob.style.cssText = `
             position: absolute;
             top: 2px;
             left: 2px;
-            width: 20px;
-            height: 20px;
+            width: 16px;
+            height: 16px;
             background-color: white;
             border-radius: 50%;
-            transition: transform 0.3s;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
         `;
         
+        // Assemble the toggle
         toggleSwitch.appendChild(toggleKnob);
+        editModeToggle.appendChild(editModeLabel);
         editModeToggle.appendChild(toggleSwitch);
         
-        // Insert after theme toggle
+        // Style the navigation links for better layout
+        const navLinks = document.querySelector('.nav-links');
+        if (navLinks) {
+            navLinks.style.cssText = `
+                display: flex;
+                gap: 2rem;
+                align-items: center;
+            `;
+        }
+        
+        // Style the language toggle
+        const languageToggle = document.querySelector('.language-toggle');
+        if (languageToggle) {
+            languageToggle.style.cssText = `
+                display: flex;
+                gap: 0.5rem;
+                margin-left: 2rem;
+            `;
+            
+            // Style language buttons
+            const languageBtns = languageToggle.querySelectorAll('.language-btn');
+            languageBtns.forEach(btn => {
+                btn.style.cssText = `
+                    padding: 0.375rem 0.75rem;
+                    border: 1px solid #d1d1d6;
+                    border-radius: 6px;
+                    background: transparent;
+                    color: inherit;
+                    font-size: 0.75rem;
+                    font-weight: 500;
+                    cursor: pointer;
+                    transition: all 0.2s ease;
+                `;
+            });
+        }
+        
+        // Style the theme toggle
         const themeToggle = document.getElementById('theme-toggle');
         if (themeToggle) {
+            themeToggle.style.cssText = `
+                width: 24px;
+                height: 24px;
+                margin-left: 1rem;
+                cursor: pointer;
+                background: transparent;
+                border: none;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            `;
+        }
+        
+        // Add export button to access editor.html
+        const exportButton = document.createElement('a');
+        exportButton.href = 'editor.html';
+        exportButton.target = '_blank';
+        exportButton.rel = 'noopener noreferrer';
+        exportButton.textContent = currentLanguage === 'zh' ? '导出站点' : 'Export Site';
+        exportButton.style.cssText = `
+            padding: 0.375rem 0.75rem;
+            border: 1px solid #0071e3;
+            border-radius: 6px;
+            background: transparent;
+            color: #0071e3;
+            font-size: 0.75rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-left: 1rem;
+            text-decoration: none;
+            display: inline-block;
+        `;
+        
+        // Insert after theme toggle
+        if (themeToggle) {
             headerContainer.insertBefore(editModeToggle, themeToggle.nextSibling);
+            headerContainer.insertBefore(exportButton, editModeToggle.nextSibling);
         }
         
         // Add click event
         editModeToggle.addEventListener('click', () => {
             isEditMode = !isEditMode;
             toggleEditMode();
+        });
+        
+        // Update edit mode label and export button when language changes
+        window.addEventListener('languageChange', () => {
+            editModeLabel.textContent = currentLanguage === 'zh' ? '编辑模式' : 'Edit Mode';
+            exportButton.textContent = currentLanguage === 'zh' ? '导出站点' : 'Export Site';
         });
     }
 }
@@ -760,12 +876,14 @@ function toggleEditMode() {
     if (isEditMode) {
         // Enable edit mode
         toggleSwitch.style.backgroundColor = '#0071e3';
-        toggleKnob.style.transform = 'translateX(26px)';
+        toggleKnob.style.transform = 'translateX(24px)';
+        toggleKnob.style.boxShadow = '0 2px 6px rgba(0, 113, 227, 0.4)';
         enableEditMode();
     } else {
         // Disable edit mode
-        toggleSwitch.style.backgroundColor = '#ccc';
+        toggleSwitch.style.backgroundColor = '#d1d1d6';
         toggleKnob.style.transform = 'translateX(2px)';
+        toggleKnob.style.boxShadow = '0 1px 3px rgba(0, 0, 0, 0.1)';
         disableEditMode();
     }
 }
@@ -783,6 +901,15 @@ function enableEditMode() {
     
     // Make about content editable
     makeAboutContentEditable();
+    
+    // Make blog content editable
+    makeBlogContentEditable();
+    
+    // Make works content editable
+    makeWorksContentEditable();
+    
+    // Make general headings and paragraphs editable
+    makeHeadingsAndParagraphsEditable();
     
     // Add background image upload functionality
     addBackgroundImageUpload();
@@ -930,6 +1057,187 @@ function makeAboutContentEditable() {
     });
 }
 
+// Make Blog Content Editable
+function makeBlogContentEditable() {
+    const blogPosts = document.querySelectorAll('.blog-post');
+    blogPosts.forEach((post, postIndex) => {
+        // Make blog title editable
+        const blogTitle = post.querySelector('h3');
+        if (blogTitle) {
+            const currentTitle = blogTitle.textContent;
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.value = currentTitle;
+            input.style.cssText = `
+                font-size: inherit;
+                font-weight: inherit;
+                color: inherit;
+                background: transparent;
+                border: 1px solid #0071e3;
+                border-radius: 4px;
+                padding: 0.5rem;
+                width: 100%;
+                max-width: 500px;
+            `;
+            
+            input.addEventListener('blur', () => {
+                blogTitle.textContent = input.value;
+                blogTitle.style.display = 'block';
+                input.remove();
+                // Save to localStorage
+                const blogContent = JSON.parse(localStorage.getItem('blogContent') || '{}');
+                if (!blogContent[postIndex]) blogContent[postIndex] = {};
+                blogContent[postIndex].title = input.value;
+                localStorage.setItem('blogContent', JSON.stringify(blogContent));
+            });
+            
+            blogTitle.style.display = 'none';
+            post.insertBefore(input, blogTitle);
+        }
+        
+        // Make blog date editable
+        const blogDate = post.querySelector('p:nth-child(2)');
+        if (blogDate) {
+            const currentDate = blogDate.textContent;
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.value = currentDate;
+            input.style.cssText = `
+                font-size: inherit;
+                color: inherit;
+                background: transparent;
+                border: 1px solid #0071e3;
+                border-radius: 4px;
+                padding: 0.375rem;
+                width: 100%;
+                max-width: 200px;
+            `;
+            
+            input.addEventListener('blur', () => {
+                blogDate.textContent = input.value;
+                blogDate.style.display = 'block';
+                input.remove();
+                // Save to localStorage
+                const blogContent = JSON.parse(localStorage.getItem('blogContent') || '{}');
+                if (!blogContent[postIndex]) blogContent[postIndex] = {};
+                blogContent[postIndex].date = input.value;
+                localStorage.setItem('blogContent', JSON.stringify(blogContent));
+            });
+            
+            blogDate.style.display = 'none';
+            post.insertBefore(input, blogDate);
+        }
+        
+        // Make blog content editable
+        const blogParagraphs = post.querySelectorAll('p:not(:nth-child(2))');
+        blogParagraphs.forEach((p, paraIndex) => {
+            const currentText = p.textContent;
+            const textarea = document.createElement('textarea');
+            textarea.value = currentText;
+            textarea.style.cssText = `
+                font-size: inherit;
+                color: inherit;
+                background: transparent;
+                border: 1px solid #0071e3;
+                border-radius: 4px;
+                padding: 0.5rem;
+                width: 100%;
+                min-height: 80px;
+                resize: vertical;
+                margin-bottom: 0.5rem;
+            `;
+            
+            textarea.addEventListener('blur', () => {
+                p.textContent = textarea.value;
+                p.style.display = 'block';
+                textarea.remove();
+                // Save to localStorage
+                const blogContent = JSON.parse(localStorage.getItem('blogContent') || '{}');
+                if (!blogContent[postIndex]) blogContent[postIndex] = {};
+                if (!blogContent[postIndex].content) blogContent[postIndex].content = [];
+                blogContent[postIndex].content[paraIndex] = textarea.value;
+                localStorage.setItem('blogContent', JSON.stringify(blogContent));
+            });
+            
+            p.style.display = 'none';
+            post.insertBefore(textarea, p);
+        });
+    });
+}
+
+// Make Works Content Editable
+function makeWorksContentEditable() {
+    const projectCards = document.querySelectorAll('.project-card');
+    projectCards.forEach((card, index) => {
+        // Make project title editable
+        const projectTitle = card.querySelector('.project-title');
+        if (projectTitle) {
+            const currentTitle = projectTitle.textContent;
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.value = currentTitle;
+            input.style.cssText = `
+                font-size: inherit;
+                font-weight: inherit;
+                color: inherit;
+                background: transparent;
+                border: 1px solid #0071e3;
+                border-radius: 4px;
+                padding: 0.5rem;
+                width: 100%;
+                max-width: 300px;
+            `;
+            
+            input.addEventListener('blur', () => {
+                projectTitle.textContent = input.value;
+                projectTitle.style.display = 'block';
+                input.remove();
+                // Save to localStorage
+                const worksContent = JSON.parse(localStorage.getItem('worksContent') || '{}');
+                if (!worksContent[index]) worksContent[index] = {};
+                worksContent[index].title = input.value;
+                localStorage.setItem('worksContent', JSON.stringify(worksContent));
+            });
+            
+            projectTitle.style.display = 'none';
+            card.insertBefore(input, projectTitle);
+        }
+        
+        // Make project tagline editable
+        const projectTagline = card.querySelector('.project-tagline');
+        if (projectTagline) {
+            const currentTagline = projectTagline.textContent;
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.value = currentTagline;
+            input.style.cssText = `
+                font-size: inherit;
+                color: inherit;
+                background: transparent;
+                border: 1px solid #0071e3;
+                border-radius: 4px;
+                padding: 0.375rem;
+                width: 100%;
+                max-width: 400px;
+            `;
+            
+            input.addEventListener('blur', () => {
+                projectTagline.textContent = input.value;
+                projectTagline.style.display = 'block';
+                input.remove();
+                // Save to localStorage
+                const worksContent = JSON.parse(localStorage.getItem('worksContent') || '{}');
+                if (!worksContent[index]) worksContent[index] = {};
+                worksContent[index].tagline = input.value;
+                localStorage.setItem('worksContent', JSON.stringify(worksContent));
+            });
+            
+            projectTagline.style.display = 'none';
+            card.insertBefore(input, projectTagline);
+        }
+    });
+}
+
 // Add Background Image Upload
 function addBackgroundImageUpload() {
     const body = document.body;
@@ -979,10 +1287,77 @@ function addBackgroundImageUpload() {
     body.appendChild(fileInput);
 }
 
+// Make Headings and Paragraphs Editable
+function makeHeadingsAndParagraphsEditable() {
+    // Make h1 elements editable
+    const headings1 = document.querySelectorAll('h1:not(.hero-title)');
+    headings1.forEach((h1, index) => {
+        makeElementEditable(h1, 'h1', index);
+    });
+    
+    // Make h2 elements editable
+    const headings2 = document.querySelectorAll('h2');
+    headings2.forEach((h2, index) => {
+        makeElementEditable(h2, 'h2', index);
+    });
+    
+    // Make h3 elements editable
+    const headings3 = document.querySelectorAll('h3:not(.project-title)');
+    headings3.forEach((h3, index) => {
+        makeElementEditable(h3, 'h3', index);
+    });
+    
+    // Make p elements editable (exclude copyright text)
+    const paragraphs = document.querySelectorAll('p:not(.hero-tagline):not(.project-tagline):not(.footer-copyright)');
+    paragraphs.forEach((p, index) => {
+        // Skip copyright text
+        if (p.textContent.includes('©') && p.textContent.includes('保留所有权利')) {
+            return;
+        }
+        makeElementEditable(p, 'p', index);
+    });
+}
+
+// Make Element Editable
+function makeElementEditable(element, elementType, index) {
+    const currentText = element.textContent;
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.value = currentText;
+    input.style.cssText = `
+        font-size: inherit;
+        font-weight: inherit;
+        color: inherit;
+        background: transparent;
+        border: 1px solid #0071e3;
+        border-radius: 4px;
+        padding: 0.5rem;
+        width: 100%;
+        max-width: 500px;
+    `;
+    
+    input.addEventListener('blur', () => {
+        element.textContent = input.value;
+        element.style.display = 'block';
+        input.remove();
+        // Save to localStorage
+        const elementContent = JSON.parse(localStorage.getItem('elementContent') || '{}');
+        if (!elementContent[elementType]) {
+            elementContent[elementType] = {};
+        }
+        elementContent[elementType][index] = input.value;
+        localStorage.setItem('elementContent', JSON.stringify(elementContent));
+    });
+    
+    element.style.display = 'none';
+    element.parentNode.insertBefore(input, element);
+    input.focus();
+}
+
 // Revert Editable Elements
 function revertEditableElements() {
     // Remove any remaining input/textarea elements
-    const editableInputs = document.querySelectorAll('.hero-title + input, .hero-tagline + input, .logo + input, .about-content textarea');
+    const editableInputs = document.querySelectorAll('.hero-title + input, .hero-tagline + input, .logo + input, .about-content textarea, .blog-post input, .blog-post textarea, .project-card input, h1 + input, h2 + input, h3 + input, p + input');
     editableInputs.forEach(input => {
         input.remove();
     });
@@ -992,11 +1367,29 @@ function revertEditableElements() {
     const heroTagline = document.querySelector('.hero-tagline');
     const logo = document.querySelector('.logo');
     const aboutParagraphs = document.querySelectorAll('.about-content p');
+    const blogTitles = document.querySelectorAll('.blog-post h3');
+    const blogDates = document.querySelectorAll('.blog-post p:nth-child(2)');
+    const blogParagraphs = document.querySelectorAll('.blog-post p:not(:nth-child(2))');
+    const projectTitles = document.querySelectorAll('.project-card .project-title');
+    const projectTaglines = document.querySelectorAll('.project-card .project-tagline');
+    const headings1 = document.querySelectorAll('h1');
+    const headings2 = document.querySelectorAll('h2');
+    const headings3 = document.querySelectorAll('h3');
+    const paragraphs = document.querySelectorAll('p');
     
     if (heroTitle) heroTitle.style.display = 'block';
     if (heroTagline) heroTagline.style.display = 'block';
     if (logo) logo.style.display = 'block';
     aboutParagraphs.forEach(p => p.style.display = 'block');
+    blogTitles.forEach(title => title.style.display = 'block');
+    blogDates.forEach(date => date.style.display = 'block');
+    blogParagraphs.forEach(p => p.style.display = 'block');
+    projectTitles.forEach(title => title.style.display = 'block');
+    projectTaglines.forEach(tagline => tagline.style.display = 'block');
+    headings1.forEach(h1 => h1.style.display = 'block');
+    headings2.forEach(h2 => h2.style.display = 'block');
+    headings3.forEach(h3 => h3.style.display = 'block');
+    paragraphs.forEach(p => p.style.display = 'block');
     
     // Remove background upload button
     const bgUploadBtn = document.querySelector('.bg-upload-btn');
@@ -1010,6 +1403,13 @@ function revertEditableElements() {
 
 // Load Saved Content from localStorage
 function loadSavedContent() {
+    // First check for editor preview data
+    const editorPreviewData = localStorage.getItem('editorPreviewData');
+    if (editorPreviewData) {
+        loadEditorPreviewData(JSON.parse(editorPreviewData));
+        return; // Exit early if preview data is available
+    }
+    
     // Load hero title
     const savedHeroTitle = localStorage.getItem('heroTitle');
     if (savedHeroTitle) {
@@ -1049,6 +1449,106 @@ function loadSavedContent() {
         });
     }
     
+    // Load blog content
+    const savedBlogContent = localStorage.getItem('blogContent');
+    if (savedBlogContent) {
+        const blogContent = JSON.parse(savedBlogContent);
+        const blogPosts = document.querySelectorAll('.blog-post');
+        blogPosts.forEach((post, postIndex) => {
+            if (blogContent[postIndex]) {
+                // Load blog title
+                const blogTitle = post.querySelector('h3');
+                if (blogTitle && blogContent[postIndex].title) {
+                    blogTitle.textContent = blogContent[postIndex].title;
+                }
+                
+                // Load blog date
+                const blogDate = post.querySelector('.blog-date');
+                if (blogDate && blogContent[postIndex].date) {
+                    blogDate.textContent = blogContent[postIndex].date;
+                }
+                
+                // Load blog content
+                const blogParagraphs = post.querySelectorAll('.blog-content p');
+                if (blogContent[postIndex].content) {
+                    blogParagraphs.forEach((p, paraIndex) => {
+                        if (blogContent[postIndex].content[paraIndex]) {
+                            p.textContent = blogContent[postIndex].content[paraIndex];
+                        }
+                    });
+                }
+            }
+        });
+    }
+    
+    // Load works content
+    const savedWorksContent = localStorage.getItem('worksContent');
+    if (savedWorksContent) {
+        const worksContent = JSON.parse(savedWorksContent);
+        const projectCards = document.querySelectorAll('.project-card');
+        projectCards.forEach((card, index) => {
+            if (worksContent[index]) {
+                // Load project title
+                const projectTitle = card.querySelector('.project-title');
+                if (projectTitle && worksContent[index].title) {
+                    projectTitle.textContent = worksContent[index].title;
+                }
+                
+                // Load project tagline
+                const projectTagline = card.querySelector('.project-tagline');
+                if (projectTagline && worksContent[index].tagline) {
+                    projectTagline.textContent = worksContent[index].tagline;
+                }
+            }
+        });
+    }
+    
+    // Load element content
+    const savedElementContent = localStorage.getItem('elementContent');
+    if (savedElementContent) {
+        const elementContent = JSON.parse(savedElementContent);
+        
+        // Load h1 content
+        if (elementContent.h1) {
+            const headings1 = document.querySelectorAll('h1:not(.hero-title)');
+            headings1.forEach((h1, index) => {
+                if (elementContent.h1[index]) {
+                    h1.textContent = elementContent.h1[index];
+                }
+            });
+        }
+        
+        // Load h2 content
+        if (elementContent.h2) {
+            const headings2 = document.querySelectorAll('h2');
+            headings2.forEach((h2, index) => {
+                if (elementContent.h2[index]) {
+                    h2.textContent = elementContent.h2[index];
+                }
+            });
+        }
+        
+        // Load h3 content
+        if (elementContent.h3) {
+            const headings3 = document.querySelectorAll('h3:not(.project-title)');
+            headings3.forEach((h3, index) => {
+                if (elementContent.h3[index]) {
+                    h3.textContent = elementContent.h3[index];
+                }
+            });
+        }
+        
+        // Load p content
+        if (elementContent.p) {
+            const paragraphs = document.querySelectorAll('p:not(.hero-tagline):not(.project-tagline):not(.footer-copyright)');
+            paragraphs.forEach((p, index) => {
+                if (elementContent.p[index]) {
+                    p.textContent = elementContent.p[index];
+                }
+            });
+        }
+    }
+    
     // Load background image
     const savedBackgroundImage = localStorage.getItem('backgroundImage');
     if (savedBackgroundImage) {
@@ -1056,5 +1556,58 @@ function loadSavedContent() {
         if (backgroundLayers.length > 0) {
             backgroundLayers[0].style.backgroundImage = `url(${savedBackgroundImage})`;
         }
+    }
+}
+
+// Load Editor Preview Data
+function loadEditorPreviewData(data) {
+    // Update logo
+    const logo = document.querySelector('.logo');
+    if (logo) {
+        logo.textContent = data.name;
+    }
+    
+    // Update hero section
+    const heroTitle = document.querySelector('.hero-title');
+    if (heroTitle) {
+        heroTitle.textContent = data.name;
+    }
+    
+    const heroTagline = document.querySelector('.hero-tagline');
+    if (heroTagline) {
+        heroTagline.textContent = data.tagline;
+    }
+    
+    // Update about content
+    const aboutParagraphs = document.querySelectorAll('.about-content p');
+    if (aboutParagraphs.length > 0) {
+        const aboutContent = data.aboutContent.split('\n');
+        aboutParagraphs.forEach((p, index) => {
+            if (index < aboutContent.length) {
+                p.textContent = aboutContent[index];
+            }
+        });
+    }
+    
+    // Update works content
+    const worksSubtitle = document.querySelector('.works p');
+    if (worksSubtitle) {
+        worksSubtitle.textContent = data.worksContent;
+    }
+    
+    // Update background image
+    if (data.backgroundImages && data.backgroundImages.length > 0) {
+        const backgroundLayers = document.querySelectorAll('.background-layer');
+        if (backgroundLayers.length > 0) {
+            backgroundLayers[0].style.backgroundImage = `url(${data.backgroundImages[0]})`;
+        }
+    }
+    
+    // Update avatar
+    if (data.avatar) {
+        const portraits = document.querySelectorAll('.portrait');
+        portraits.forEach(portrait => {
+            portrait.style.backgroundImage = `url(${data.avatar})`;
+        });
     }
 }
