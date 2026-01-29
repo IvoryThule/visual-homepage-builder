@@ -77,6 +77,38 @@ portfolio-generator/
 │       └── generateZip.js
 ```
 
+## 🚀 快速启动
+
+### 环境要求
+- Node.js 16+
+- npm 或 yarn
+
+### 安装依赖
+在项目根目录下运行以下命令安装依赖：
+```bash
+npm install
+```
+
+### 启动开发服务器
+运行以下命令启动本地开发服务器：
+```bash
+npm run dev
+```
+启动后，打开浏览器访问 [http://localhost:5173](http://localhost:5173)。
+
+### 构建项目
+运行以下命令生成生产环境的静态文件：
+```bash
+npm run build
+```
+生成的文件将位于 `dist/` 目录下。
+
+### 预览生产环境构建
+运行以下命令预览生产环境构建：
+```bash
+npm run preview
+```
+
 ## 🤝 贡献指南
 我们非常欢迎社区贡献！无论是增加新的模板风格、优化 UI 细节，还是修复 Bug，您的每一次 Commit 都能让更多人轻松拥有个人主页。
 
