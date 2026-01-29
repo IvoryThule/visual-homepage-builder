@@ -3,87 +3,202 @@
 无需编写代码，三分钟打造属于你的现代风格个人主页。
 
 [在此处插入项目演示截图或GIF]
+# 🍱 Portfol.io Generator（HomePageExample）
 
-## 📖 项目简介
-Portfol.io Generator 是一个运行在浏览器端的静态站点可视化构建工具。
+一款运行在浏览器端的个人主页可视化生成器 —— 无需编写代码，三分钟打造现代风格个人主页。
 
-许多开发者、设计师和创作者都希望拥有一个展示自我的个人主页，但往往受限于繁琐的代码编写、复杂的部署流程以及设计能力的匮乏。这个项目的初衷是将“个人主页”产品化、模板化。
+![在此处插入项目演示截图或 GIF（例如：portfolio-generator/docs/demo.gif）]
+<!--
+	README.md（中文）—— 专为 HomePageExample 仓库设计
+	- 请把项目演示截图或 GIF 放在仓库根目录的 `assets/` 或 `docs/` 文件夹，
+		然后替换下方的占位路径。
+-->
 
-用户只需通过左侧的配置面板填写信息、上传图片，即可在右侧实时预览一个基于 Bento Grid (便当盒) 风格的现代网页。配置完成后，一键导出包含所有资源的 .zip 压缩包，解压即可部署至 GitHub Pages、Vercel 或任何静态服务器。
+# HomePageExample — 作品集生成器与展示模板
 
-## ✨ 核心特性
+**简介：**
+HomePageExample 汇集了若干静态个人主页模板和一个基于 React + Vite 的可视化 "Portfol.io Generator"，用于在浏览器中快速创建、预览并导出静态个人主页（无需后端）。
 
-### 🎨 现代 UI 设计
-- **Bento Grid 布局**：采用当下流行的网格化布局，信息展示清晰有序，视觉平衡感极佳。
-- **磨砂玻璃质感 (Glassmorphism)**：高级的半透明模糊效果，搭配霓虹微光背景，营造极具科技感与未来感的视觉体验。
-- **完全响应式**：完美适配桌面大屏、平板电脑以及移动手机，随时随地展示最佳状态。
+---
 
-### 🛠️ 高度可配置
-- **身份定制**：支持修改姓名、职位头衔、个人简介（About Me）。
-- **技能标签**：动态添加或删除个人技能 Tag（如 React, UI Design, Photography 等）。
-- **社交矩阵**：自定义添加社交媒体链接与图标，构建你的全网影响力中心。
-- **作品集展示**：卡片式展示个人项目，支持自定义封面、标题及描述。
-- **视觉自定义**：支持上传个人头像、自定义高清背景图，打造独一无二的个人品牌。
+**演示 / 截图（占位）**
 
-### 🚀 极致的开发体验
-- **所见即所得 (WYSIWYG)**：左侧编辑，右侧毫秒级实时渲染预览，无需等待编译。
-- **纯前端架构**：所有数据处理均在浏览器本地完成，保护用户隐私，无需上传数据到服务器。
-- **一键导出**：通过核心算法将当前预览的页面打包为标准的 HTML/CSS 静态文件包。
-- **零依赖部署**：导出的网站代码不依赖任何复杂的构建工具或框架，开箱即用。
+在这里插入项目演示的静态截图或 GIF：
 
-## 💡 设计哲学
-本项目遵循 "Config over Code" (配置优于代码) 的理念。
+![Demo GIF 或 Screenshot](./assets/demo.gif)
 
-我们将复杂的 CSS 布局、响应式逻辑和交互动画封装在模板底层。用户不再需要纠结 div 如何居中或 flex 布局如何换行，只需要专注于内容本身。通过直观的表单交互，让没有任何编程基础的用户也能拥有设计师级别的个人主页。
+（提示：将实际图像放到 `assets/` 或 `docs/`，然后替换上面的路径）
 
-## 🗺️ 使用流程
-1. **填写信息**：在侧边栏输入您的基本资料、经历和想要展示的项目。
-2. **上传素材**：选择一张帅气的头像和一张彰显个性的背景图。
-3. **实时预览**：在右侧画布中即时查看最终效果，调整至满意为止。
-4. **导出代码**：点击右上角的“导出”按钮，下载 ZIP 压缩包。
-5. **上线部署**：解压文件，将文件夹上传至服务器或静态托管平台，您的主页即刻上线。
+---
 
-## 🏗️ 技术栈概览
-虽然用户无需了解代码，但对于开发者而言，本项目构建于以下现代技术之上：
+**核心卖点**
 
-- **前端框架**：React
-- **构建工具**：Vite
-- **样式引擎**：Tailwind CSS
-- **打包核心**：JSZip & FileSaver
-- **图标库**：Lucide React
+- 所见即所得的可视化编辑器（编辑-实时预览-导出）
+- Bento Grid 风格模板 + 磨砂玻璃（Glassmorphism）视觉
+- 纯前端导出：生成可直接部署的静态 HTML/CSS/JS 包（ZIP）
+- 可配置的模块化组件（标签、作品卡片、社交矩阵、背景/头像替换）
 
-## 📂 文件结构
-```
-portfolio-generator/
-├── index.html
-├── package.json
-├── postcss.config.js
-├── tailwind.config.js
-├── vite.config.mts
-├── src/
-│   ├── App.jsx
-│   ├── index.css
-│   ├── main.jsx
-│   ├── components/
-│   │   ├── Editor.jsx
-│   │   ├── Preview.jsx
-│   │   └── ui/
-│   │       ├── Badge.jsx
-│   │       ├── Button.jsx
-│   │       ├── CategoryCard.jsx
-│   │       ├── Input.jsx
-│   │       └── Textarea.jsx
-│   └── utils/
-│       └── generateZip.js
+---
+
+**快速开始（针对 `portfolio-generator`）**
+
+前置要求：
+
+- Node.js v16+
+- 推荐使用 `npm`（或 `yarn`）
+
+在仓库根目录中打开终端并执行：
+
+```powershell
+cd .\portfolio-generator
+npm install
+npm run dev
 ```
 
-## 🚀 快速启动
+开发服务器默认地址（Vite）：
 
-### 环境要求
-- Node.js 16+
-- npm 或 yarn
+```
+http://localhost:5173
+```
 
-### 安装依赖
+生产构建：
+
+```powershell
+npm run build
+npm run preview
+```
+
+生成的静态文件会输出到 `portfolio-generator/dist/`（可直接上传到 GitHub Pages / Vercel / 任何静态托管）。
+
+---
+
+**目录结构（更详细）**
+
+```
+HomePageExample/
+├─ LICENSE
+├─ README.md                # 本文件（中文）
+├─ README.en.md             # 英文版
+├─ neo-portfolio.html       # 现成静态模板示例
+├─ personal-portfolio.html  # 另一个静态模板示例
+├─ images/                  # 通用图片资源（avatar、backgrounds、icons）
+├─ js/                      # 站点级别脚本（legacy）
+└─ portfolio-generator/     # 可视化生成器（主要开发目录）
+	 ├─ index.html
+	 ├─ package.json
+	 ├─ postcss.config.js
+	 ├─ tailwind.config.js
+	 ├─ vite.config.mts
+	 ├─ src/
+	 │  ├─ App.jsx            # 根组件：整合 Editor 与 Preview
+	 │  ├─ main.jsx           # 入口（React mount）
+	 │  ├─ index.css          # 全局样式（Tailwind +定制）
+	 │  ├─ components/
+	 │  │  ├─ Editor.jsx     # 左侧配置面板（表单与上传）
+	 │  │  ├─ Preview.jsx    # 右侧实时预览（已拆分音乐播放器到 components/music）
+	 │  │  └─ ui/            # 可复用小组件（Badge, Button, Input, Textarea 等）
+	 │  └─ utils/
+	 │     └─ generateZip.js # 导出 ZIP 的实现（浏览器端打包）
+	 └─ dist/                # 构建产物（存在时）
+```
+
+---
+
+**定制说明**
+
+- 主题色：在编辑器中设置 `Primary Color` 即可。
+- 背景与头像：通过编辑器上传本地图片（使用 `URL.createObjectURL` 生成预览），导出时会把图片嵌入到导出包。
+- 技能标签：可以在侧边栏动态添加/删除，Preview 将以卡片形式展示。
+
+---
+
+**导出与部署**
+
+- 点击编辑器右上角的“导出”会触发 `generateZip`，生成一个包含 HTML、CSS、图片与 JS 的 ZIP 包。
+- 将 ZIP 解压并将 `index.html` 与关联文件夹上传到 GitHub Pages / Vercel / Netlify 即可上线。
+
+---
+
+**贡献指南**
+
+感谢你的贡献！简单流程：
+
+1. Fork 仓库并创建分支：
+
+```bash
+git checkout -b feature/your-feature
+```
+
+2. 本地开发、编写测试并提交：
+
+```bash
+git add .
+git commit -m "feat: 描述你的改动"
+git push origin feature/your-feature
+```
+
+3. 提交 Pull Request，我们会尽快 review。
+
+---
+
+**维护与联系方式**
+
+如果你在使用中遇到问题，欢迎在 Issues 中描述复现步骤与浏览器控制台日志。
+
+---
+
+**许可证**
+
+本项目遵循 MIT 许可。详见 `LICENSE` 文件。
+
+
+## 🧭 功能概览
+
+- 所见即所得编辑（左侧表单 + 右侧实时预览）
+- Avatar / Background 上传与即时显示（使用 Object URLs 处理本地文件预览）
+- 卡片组件（Profile、Tech Stack、Projects、Posts）
+- 内置音乐播放器（支持基本播放 / 切歌 / 歌词显示）
+- 一键导出静态站点（zip）
+
+---
+
+## 🧩 开发与调试提示
+
+- 如果背景或头像无法预览，请确认浏览器控制台是否有错误（例如资源加载或跨域问题）。
+- 音乐播放受浏览器自动播放策略与外链可用性影响（播放器包含自动切歌逻辑）。
+
+---
+
+## 🤝 贡献指南
+
+欢迎任何形式的贡献：Issue、PR、文案与设计改进。
+
+流程：
+
+1. Fork 并新建分支：`git checkout -b feature/your-feature`
+2. 本地实现并测试：`cd portfolio-generator; npm install; npm run dev`
+3. 代码提交请使用说明性 commit message（例如 `feat: add export progress`）
+4. 提交 PR 并在描述中添加测试步骤与预期行为
+
+建议包含变更摘要、影响范围与可复现步骤。
+
+---
+
+## 📬 联系与致谢
+
+如果你有问题或建议，请在 GitHub Issues 提交，或发送邮件到：`2728347417@qq.com`
+
+感谢所有贡献者与早期用户的反馈。
+
+---
+
+## 📜 许可证
+
+本项目采用 MIT 许可证，详见根目录 `LICENSE` 文件。
+
+---
+
+(完)
 在项目根目录下运行以下命令安装依赖：
 ```bash
 npm install
