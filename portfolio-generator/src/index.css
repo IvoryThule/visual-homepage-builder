@@ -1,0 +1,56 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  @apply bg-gray-950 text-gray-100;
+  font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont,
+    "PingFang SC", "HarmonyOS Sans", "Microsoft YaHei", sans-serif;
+}
+
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(148, 163, 184, 0.6) transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: rgba(148, 163, 184, 0.6);
+  border-radius: 999px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* 细噪点纹理，用于卡片表面 */
+.noise-surface {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120' viewBox='0 0 120 120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='noStitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.08'/%3E%3C/svg%3E");
+  background-size: 120px 120px;
+}
+
+@keyframes subtleGlow {
+  0% {
+    opacity: 0.15;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    opacity: 0.3;
+    transform: translate3d(8px, -6px, 0) scale(1.03);
+  }
+  100% {
+    opacity: 0.15;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+.bg-glow-animated {
+  animation: subtleGlow 14s ease-in-out infinite;
+}
+
+
