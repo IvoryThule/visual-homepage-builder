@@ -22,6 +22,22 @@ const initialData = {
       url: "https://linkedin.com/in/yourname",
       icon: "linkedin",
     },
+    { platform: "QQ", url: "https://qq.com/yourname", icon: "qq" },
+    {
+      platform: "WeChat",
+      url: "https://wechat.com/yourname",
+      icon: "wechat",
+    },
+    {
+      platform: "Bilibili",
+      url: "https://bilibili.com/yourname",
+      icon: "bilibili",
+    },
+    {
+      platform: "TikTok",
+      url: "https://tiktok.com/@yourname",
+      icon: "tiktok",
+    },
   ],
   projects: [
     {

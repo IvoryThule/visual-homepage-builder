@@ -10,6 +10,10 @@ const SOCIAL_ICON_OPTIONS = [
   { label: "Twitter/X", value: "twitter" },
   { label: "LinkedIn", value: "linkedin" },
   { label: "Website", value: "web" },
+  { label: "QQ", value: "qq" },
+  { label: "WeChat", value: "wechat" },
+  { label: "Bilibili", value: "bilibili" },
+  { label: "TikTok", value: "tiktok" },
 ];
 
 export default function Editor({ data, setData }) {
