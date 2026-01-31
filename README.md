@@ -1,4 +1,4 @@
-# 🍱 Portfol.io Generator（HomePageExample）
+# 🍱 Portfol.io Generator（visual-homepage-builder）
 
 一个在浏览器中运行的可视化个人主页生成器，使用 React + Vite 实现。无需后端或手写页面，快速编辑、实时预览并导出可部署的静态站点。
 
@@ -8,10 +8,10 @@
 
 ![导出示例 GIF](./assets/gifs/导出静态网站演示.gif)
 
-# HomePageExample — 作品集生成器与展示模板
+# visual-homepage-builder — 作品集生成器与展示模板
 
 **简介：**
-HomePageExample 汇集了若干静态个人主页模板和一个基于 React + Vite 的可视化 "Portfol.io Generator"，用于在浏览器中快速创建、预览并导出静态个人主页（无需后端）。
+visual-homepage-builder 汇集了若干静态个人主页模板和一个基于 React + Vite 的可视化 "Portfol.io Generator"，用于在浏览器中快速创建、预览并导出静态个人主页（无需后端）。
 
 ---
 
@@ -58,7 +58,7 @@ npm run preview
 ## 仓库结构（节选）
 
 ```
-HomePageExample/
+visual-homepage-builder/
 ├─ README.md                  # 本文件（中文）
 ├─ README.en.md               # 英文说明
 ├─ LICENSE

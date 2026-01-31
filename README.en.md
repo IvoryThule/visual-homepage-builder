@@ -1,8 +1,8 @@
-# HomePageExample — Portfolio Generator & Templates
+# visual-homepage-builder — Portfolio Generator & Templates
 
 **Overview**
 
-HomePageExample contains multiple static portfolio templates and a visual "Portfol.io Generator" built with React + Vite. The generator enables users to create, preview and export a static personal homepage directly in the browser — no backend required.
+visual-homepage-builder contains multiple static portfolio templates and a visual "Portfol.io Generator" built with React + Vite. The generator enables users to create, preview and export a static personal homepage directly in the browser — no backend required.
 
 ---
 
