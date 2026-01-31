@@ -1,39 +1,48 @@
-# visual-homepage-builder — Portfolio Generator & Templates
+# Visual Homepage Builder — Visual editor + templates
 
-**Overview**
-
-visual-homepage-builder contains multiple static portfolio templates and a visual "Portfol.io Generator" built with React + Vite. The generator enables users to create, preview and export a static personal homepage directly in the browser — no backend required.
+This project provides a WYSIWYG visual editor (React + Vite) and several static portfolio templates. The editor lets users edit, preview and export a deployable static personal homepage; an optional backend provides registration/login and cloud-saving features.
 
 ---
 
-## Demo
+## Demo & Screenshots
 
-Below is a short GIF that demonstrates exporting a generated static site from the visual editor.
+Editor screenshot:
 
-![Export demo GIF](./MarkdownImages/gifs/导出静态网站演示.gif)
+![Editor screenshot](./MarkdownImages/screenshots/编辑器界面.png)
 
-Also see a screenshot of the editor UI:
+Export demo GIF:
 
-![Editor screenshot](./MarkdownImages/screenshots/设置好信息之后的界面截图.png)
+![Export demo GIF](./MarkdownImages/gifs/演示gif.gif)
 
 Place additional screenshots or assets in `MarkdownImages/` or `docs/` and update paths as needed.
 
 ---
 
-## Key Highlights
+## Key Features
 
-- WYSIWYG visual editor — edit, preview and export without touching code
-- Modern Bento Grid + glassmorphism UI
-- Client-side export: generates a deployable static HTML/CSS/JS ZIP
-- Modular components: projects, tags, social links, avatar/background upload
+- WYSIWYG visual editor — edit, preview and export without writing code
+- Frontend: React + Vite + Tailwind, supports image upload, project cards, tags, built-in music player
+- Backend (optional): Express + MySQL, provides registration/login, JWT auth and config save/load
+- Client export: generates a ZIP containing static HTML/CSS/JS for easy deployment
 
 ---
 
 ## Quick Start (developer)
 
-Requirements: Node.js 16+, npm or yarn
+Requirements: Node.js 16+, npm
 
-Run frontend development server:
+Start backend (optional — for registration/login and cloud save):
+
+```powershell
+cd .\backend
+npm install
+# configure .env (see below), then
+npm run start
+```
+
+Default backend port: `3001` (override via `backend/.env`).
+
+Start frontend:
 
 ```powershell
 cd .\frontend
@@ -41,16 +50,18 @@ npm install
 npm run dev
 ```
 
-Open `http://localhost:5173` in your browser. Build for production (frontend):
+Open `http://localhost:5173` in your browser.
+
+Build frontend for production:
 
 ```powershell
 cd .\frontend
 npm run build
-cd ..
+# preview production build
 npm --prefix frontend run preview
 ```
 
-Build output: `frontend/dist/` (ready to deploy).
+Build output: `frontend/dist/`.
 
 ---
 
@@ -60,28 +71,26 @@ Key folders:
 
 ```
 frontend/   # visual editor (React + Vite)
-	├─ index.html
-	├─ package.json
-	├─ src/
-	│  ├─ App.jsx
-	│  ├─ main.jsx
-	│  ├─ components/
-	│  │  ├─ Editor.jsx
-	│  │  ├─ Preview.jsx
-	│  │  └─ music/
-	│  │     ├─ MusicPlayer.jsx
-	│  │     └─ playlist.js
-	│  └─ utils/
-	│     └─ generateZip.js
-backend/                # backend placeholder (optional API / deployment)
-MarkdownImages/                # screenshots (PNG) and demo GIF
+backend/    # optional Express API
+MarkdownImages/ # screenshots and demo GIFs used in README
+legacy-templates/ # static templates used as export references
 ```
+
+---
+
+## Roadmap
+
+- Music enhancements: integrate open music APIs and external playlist import
+- Template marketplace: add more export templates and selection UI
+- Export improvements: one-click deploy to GitHub Pages, domain/deploy guides
+- Component marketplace: save/share reusable component configs
+- Tests & CI: add unit/integration tests and GitHub Actions for build preview
 
 ---
 
 ## Contributing
 
-Fork → feature branch → PR. Use descriptive commit messages and include testing steps in PR description.
+Fork → branch → PR. Include testing steps and a clear description.
 
 ---
 
