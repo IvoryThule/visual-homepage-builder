@@ -43,8 +43,8 @@ async function authMiddleware(req, res, next) {
 }
 
 // Ensure uploads directory exists and serve it statically
-// Default uploads dir: one level above backend, in 'uploads' folder (keeps it outside repo/public so deploys won't delete it)
-const uploadsDir = process.env.UPLOADS_DIR || path.join(__dirname, '..', 'uploads');
+// Use process.cwd()/uploads by default so uploads live next to deployed app root
+const uploadsDir = process.env.UPLOADS_DIR || path.join(process.cwd(), 'uploads');
 fs.mkdirSync(uploadsDir, { recursive: true });
 console.log('[uploads] serving uploads from', uploadsDir);
 app.use('/uploads', express.static(uploadsDir));
@@ -93,9 +93,26 @@ router.post('/upload/:kind', authMiddleware, async (req, res) => {
 			console.error('[upload] multer error', err);
 			return res.status(400).json({ message: err.message || 'upload error' });
 		}
-		if (!req.file) return res.status(400).json({ message: 'no file uploaded' });
+		if (!req.file) {
+			console.warn('[upload] no req.file present after multer');
+			return res.status(400).json({ message: 'no file uploaded' });
+		}
+		// Log actual paths for debugging
+		console.log('[upload] multer file:', {
+			fieldname: req.file.fieldname,
+			originalname: req.file.originalname,
+			encoding: req.file.encoding,
+			mimetype: req.file.mimetype,
+			destination: req.file.destination,
+			filename: req.file.filename,
+			path: req.file.path,
+			size: req.file.size,
+		});
 		const publicUrl = `/uploads/${req.file.filename}`;
-		console.log(`[upload] userId=${req.user.id} kind=${kind} saved=${publicUrl}`);
+		// sanity check: file exists on disk
+		const fullPath = path.join(uploadsDir, req.file.filename);
+		const exists = fs.existsSync(fullPath);
+		console.log(`[upload] userId=${req.user.id} kind=${kind} saved=${publicUrl} exists=${exists} fullPath=${fullPath}`);
 		return res.json({ url: publicUrl });
 	});
 });
