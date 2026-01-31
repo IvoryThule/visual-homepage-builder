@@ -77,8 +77,14 @@ function makeUploader(kind) {
 const router = express.Router();
 
 // Upload endpoints: /api/upload/avatar and /api/upload/bg
-router.post('/upload/:kind(avatar|bg)', authMiddleware, async (req, res) => {
+// Note: older path-to-regexp versions (used by some router packages) don't accept
+// the inline regex syntax like ':kind(avatar|bg)'. Use a plain param and validate
+// its value inside the handler to remain compatible.
+router.post('/upload/:kind', authMiddleware, async (req, res) => {
 	const kind = req.params.kind;
+	if (!['avatar', 'bg'].includes(kind)) {
+		return res.status(400).json({ message: 'invalid upload kind' });
+	}
 	const uploader = makeUploader(kind);
 	uploader.single('file')(req, res, (err) => {
 		if (err) {
