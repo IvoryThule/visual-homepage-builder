@@ -124,7 +124,43 @@ export default function App() {
     }
     try {
       setExporting(true);
-      await api.post("/config", { config: data });
+
+      // Helper: upload file if it's a File object
+      const uploadIfFile = async (file, kind) => {
+        if (!file) return null;
+        if (!(file instanceof File) && !(file instanceof Blob)) return null;
+        const form = new FormData();
+        form.append('file', file);
+        const res = await api.post(`/upload/${kind}`, form, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        });
+        return res.data?.url || null;
+      };
+
+      const payload = { ...data };
+
+      // Upload avatar/bg only when they are File objects (i.e. newly selected)
+      if (data.avatar instanceof File || data.avatar instanceof Blob) {
+        const url = await uploadIfFile(data.avatar, 'avatar');
+        if (url) {
+          payload.avatar = null;
+          payload.avatarPreview = url;
+          payload.avatarUrl = url;
+          // Update local state so UI immediately reflects uploaded URL
+          setData((prev) => ({ ...prev, avatar: null, avatarPreview: url }));
+        }
+      }
+      if (data.bg instanceof File || data.bg instanceof Blob) {
+        const url = await uploadIfFile(data.bg, 'bg');
+        if (url) {
+          payload.bg = null;
+          payload.bgPreview = url;
+          payload.bgUrl = url;
+          setData((prev) => ({ ...prev, bg: null, bgPreview: url }));
+        }
+      }
+
+      await api.post("/config", { config: payload });
       alert("已保存到云端");
     } catch (err) {
       console.error(err);

@@ -4,6 +4,9 @@ const cors = require("cors");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
 const mysql = require("mysql2/promise");
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
 
 const PORT = process.env.PORT || 3001;
 const JWT_SECRET = process.env.JWT_SECRET || "please-change-this-secret";
@@ -38,6 +41,54 @@ async function authMiddleware(req, res, next) {
 		return res.status(401).json({ message: "Invalid token" });
 	}
 }
+
+// Ensure uploads directory exists and serve it statically
+const uploadsDir = path.join(__dirname, 'public', 'uploads');
+fs.mkdirSync(uploadsDir, { recursive: true });
+app.use('/uploads', express.static(uploadsDir));
+
+// helper to create multer instance for avatar/bg kinds
+function makeUploader(kind) {
+	const storage = multer.diskStorage({
+		destination: (req, file, cb) => cb(null, uploadsDir),
+		filename: (req, file, cb) => {
+			try {
+				const userId = req.user?.id || 'anon';
+				const ext = path.extname(file.originalname).toLowerCase() || '.png';
+				// remove existing files for this user+kind (user_<id>_<kind>.*)
+				try {
+					const files = fs.readdirSync(uploadsDir);
+					files.forEach((f) => {
+						if (f.startsWith(`user_${userId}_${kind}`)) {
+							try { fs.unlinkSync(path.join(uploadsDir, f)); } catch (e) {}
+						}
+					});
+				} catch (e) {}
+				const filename = `user_${userId}_${kind}${ext}`;
+				cb(null, filename);
+			} catch (e) {
+				cb(e);
+			}
+		}
+	});
+	return multer({ storage, limits: { fileSize: 5 * 1024 * 1024 } }); // 5MB limit
+}
+
+// Upload endpoints: /api/upload/avatar and /api/upload/bg
+router.post('/upload/:kind(avatar|bg)', authMiddleware, async (req, res) => {
+	const kind = req.params.kind;
+	const uploader = makeUploader(kind);
+	uploader.single('file')(req, res, (err) => {
+		if (err) {
+			console.error('[upload] multer error', err);
+			return res.status(400).json({ message: err.message || 'upload error' });
+		}
+		if (!req.file) return res.status(400).json({ message: 'no file uploaded' });
+		const publicUrl = `/uploads/${req.file.filename}`;
+		console.log(`[upload] userId=${req.user.id} kind=${kind} saved=${publicUrl}`);
+		return res.json({ url: publicUrl });
+	});
+});
 
 const router = express.Router();
 
