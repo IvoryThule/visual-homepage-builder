@@ -195,10 +195,10 @@ export default function Editor({ data, setData }) {
             <label className="block text-[11px] mb-1 text-gray-400">
               主色调 / Primary Color
             </label>
-            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2">
               <input
                 type="color"
-                value={data.primaryColor || "#60a5fa"}
+                value={(data.primaryColor || "#60a5fa").slice(0,7)}
                 onChange={handleColorChange}
                 className="w-8 h-8 rounded-md border border-gray-700 bg-transparent"
               />

@@ -60,7 +60,7 @@ const initialData = {
       link: "#",
     },
   ],
-  primaryColor: "#000000ff",
+  primaryColor: "#000000",
   avatar: null,
   background: null,
   // 默认使用 public 静态目录下的图片，Vite 会直接提供这些资源
@@ -86,10 +86,19 @@ export default function App() {
         const loggedUsername = localStorage.getItem("loggedUsername");
         if (cfg) {
           // merge remote config; ensure avatarPreview/bgPreview fall back to local defaults
+          const normalizePreviewUrl = (u) => {
+            if (!u) return null;
+            if (u.startsWith('http://') || u.startsWith('https://')) return u;
+            if (u.startsWith('/')) return u;
+            if (u.startsWith('uploads/')) return '/' + u;
+            // if it's just a filename, prefix with /uploads/
+            return '/uploads/' + u;
+          };
+
           setData((prev) => {
             const merged = { ...prev, ...cfg, name: cfg.name || loggedUsername || prev.name };
-            merged.avatarPreview = cfg.avatarPreview || prev.avatarPreview || '/images/avatar/IUNO.png';
-            merged.bgPreview = cfg.bgPreview || prev.bgPreview || '/images/background/Iuno.jpg';
+            merged.avatarPreview = normalizePreviewUrl(cfg.avatarPreview) || prev.avatarPreview || '/images/avatar/IUNO.png';
+            merged.bgPreview = normalizePreviewUrl(cfg.bgPreview) || prev.bgPreview || '/images/background/Iuno.jpg';
             return merged;
           });
         } else if (loggedUsername) {
