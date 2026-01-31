@@ -33,20 +33,24 @@ Place additional screenshots or assets in `assets/` or `docs/` and update paths 
 
 Requirements: Node.js 16+, npm or yarn
 
+Run frontend development server:
+
 ```powershell
-cd .\portfolio-generator
+cd .\frontend
 npm install
 npm run dev
 ```
 
-Open `http://localhost:5173` in your browser. Build for production:
+Open `http://localhost:5173` in your browser. Build for production (frontend):
 
 ```powershell
+cd .\frontend
 npm run build
-npm run preview
+cd ..
+npm --prefix frontend run preview
 ```
 
-Build output: `portfolio-generator/dist/` (ready to deploy).
+Build output: `frontend/dist/` (ready to deploy).
 
 ---
 
@@ -55,7 +59,7 @@ Build output: `portfolio-generator/dist/` (ready to deploy).
 Key folders:
 
 ```
-portfolio-generator/   # visual editor (React + Vite)
+frontend/   # visual editor (React + Vite)
 	├─ index.html
 	├─ package.json
 	├─ src/
@@ -69,6 +73,7 @@ portfolio-generator/   # visual editor (React + Vite)
 	│  │     └─ playlist.js
 	│  └─ utils/
 	│     └─ generateZip.js
+backend/                # backend placeholder (optional API / deployment)
 assets/                # screenshots (PNG) and demo GIF
 ```
 

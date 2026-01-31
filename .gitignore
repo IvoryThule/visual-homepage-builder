@@ -13,6 +13,12 @@ pnpm-debug.log*
 dist/
 build/
 
+# Monorepo frontend/backend ignores
+frontend/node_modules/
+frontend/dist/
+backend/node_modules/
+backend/.env
+
 # IDE settings
 .vscode/
 .idea/

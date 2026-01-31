@@ -1,0 +1,14 @@
+{
+  "name": "visual-homepage-builder-backend",
+  "version": "0.0.1",
+  "description": "Backend placeholder for visual-homepage-builder",
+  "main": "server.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {}
+}

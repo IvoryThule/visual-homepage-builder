@@ -30,10 +30,10 @@ visual-homepage-builder 汇集了若干静态个人主页模板和一个基于 R
 
 前置：Node.js 16+，npm 或 yarn
 
-在仓库根目录执行：
+在仓库根目录执行前端开发：
 
 ```powershell
-cd .\portfolio-generator
+cd .\frontend
 npm install
 npm run dev
 ```
@@ -44,14 +44,16 @@ npm run dev
 http://localhost:5173
 ```
 
-构建生产：
+构建生产（前端）：
 
 ```powershell
+cd .\frontend
 npm run build
-npm run preview
+cd ..
+npm --prefix frontend run preview
 ```
 
-构建产物位于 `portfolio-generator/dist/`，可直接部署到任意静态托管服务。 
+前端构建产物位于 `frontend/dist/`，可直接部署到任意静态托管服务。
 
 ---
 
@@ -67,7 +69,7 @@ visual-homepage-builder/
 │  └─ gifs/                   # 演示 GIF
 ├─ neo-portfolio.html         # 预制静态模板示例
 ├─ personal-portfolio.html    # 另一个静态模板示例
-├─ portfolio-generator/       # 可视化生成器（主要开发目录）
+├─ frontend/                  # 可视化生成器（主要开发目录）
 │  ├─ index.html              # 入口 HTML
 │  ├─ package.json            # npm scripts / 依赖
 │  ├─ vite.config.mts         # Vite 配置
@@ -89,6 +91,7 @@ visual-homepage-builder/
 │  │  └─ utils/
 │  │     └─ generateZip.js    # 浏览器端 ZIP 导出实现
 │  └─ dist/                   # 构建产物（生产构建输出）
+└─ backend/                   # 后端占位（可用于 API、部署脚本等）
 ```
 
 ---
