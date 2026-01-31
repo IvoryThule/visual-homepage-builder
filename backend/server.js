@@ -74,6 +74,8 @@ function makeUploader(kind) {
 	return multer({ storage, limits: { fileSize: 5 * 1024 * 1024 } }); // 5MB limit
 }
 
+const router = express.Router();
+
 // Upload endpoints: /api/upload/avatar and /api/upload/bg
 router.post('/upload/:kind(avatar|bg)', authMiddleware, async (req, res) => {
 	const kind = req.params.kind;
@@ -89,8 +91,6 @@ router.post('/upload/:kind(avatar|bg)', authMiddleware, async (req, res) => {
 		return res.json({ url: publicUrl });
 	});
 });
-
-const router = express.Router();
 
 // Register (now accepts username, email, password)
 router.post("/auth/register", async (req, res) => {
