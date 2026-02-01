@@ -3,7 +3,7 @@ import { saveAs } from "file-saver";
 import { DEFAULT_PLAYLIST } from "../components/music/playlist";
 
 // ==================================================================================
-// 1. 图标定义 (注入到 HTML 的 React 组件)
+// 1. 图标定义
 // ==================================================================================
 const ICONS_JS_STRING = `
 const Icons = {
@@ -30,7 +30,47 @@ const Icons = {
 `;
 
 // ==================================================================================
-// 2. MusicPlayer 组件代码 (直接注入)
+// 2. 注入 API 逻辑
+// ==================================================================================
+const API_LOGIC_STRING = `
+// 确保这里是你的公网 IP/域名。如果是本地测试导出，这里可以填 localhost
+// 但给别人用必须是公网地址
+const API_BASE = "http://1.14.207.212:8080"; 
+
+async function fetchQQPlayUrl(songmid) {
+  try {
+    const res = await fetch(\`\${API_BASE}/qqmusic/song/urls?id=\${songmid}\`);
+    const data = await res.json();
+    return data.data[songmid] || "";
+  } catch (e) {
+    console.error("Fetch QQ Url failed", e);
+    return "";
+  }
+}
+
+async function fetchQQLyric(songmid) {
+  try {
+    const res = await fetch(\`\${API_BASE}/qqmusic/lyric?songmid=\${songmid}\`);
+    const data = await res.json();
+    return data.data.lyric || "";
+  } catch (e) {
+    return "";
+  }
+}
+
+async function fetchNeteaseLyric(id) {
+  try {
+    const res = await fetch(\`\${API_BASE}/netease/lyric?id=\${id}\`);
+    const data = await res.json();
+    return data.lrc ? data.lrc.lyric : "";
+  } catch (e) {
+    return "";
+  }
+}
+`;
+
+// ==================================================================================
+// 3. MusicPlayer 组件代码
 // ==================================================================================
 const MUSIC_PLAYER_CODE = `
 const { useState, useRef, useEffect } = React;
@@ -66,6 +106,10 @@ function secureUrl(url) {
 const MusicPlayer = ({ playlist, primaryColor }) => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
+  
+  const [realSrc, setRealSrc] = useState("");
+  const [realLrc, setRealLrc] = useState("");
+
   const [progress, setProgress] = useState(0); 
   const [isDragging, setIsDragging] = useState(false);
   const [showLyrics, setShowLyrics] = useState(false);
@@ -77,165 +121,115 @@ const MusicPlayer = ({ playlist, primaryColor }) => {
 
   const audioRef = useRef(null);
   const lyricsContainerRef = useRef(null);
-  const middleAreaRef = useRef(null);
 
   if (!playlist || playlist.length === 0) return null;
   const currentSong = playlist[currentIndex];
 
   useEffect(() => {
-    setLyricsLines(parseLrc(currentSong.lrc));
-    setActiveLyricIndex(0);
+    let isMounted = true;
     setLoadError(false);
+    setLyricsLines([]);
+    setRealLrc("");
+
+    const fallbackUrl = \`https://music.163.com/song/media/outer/url?id=\${currentSong.id}.mp3\`;
+    if (currentSong.platform === 'qq') {
+       setRealSrc(currentSong.src || ""); 
+    } else {
+       setRealSrc(currentSong.src || fallbackUrl);
+    }
+    
+    if (currentSong.lrc) setRealLrc(currentSong.lrc);
+
+    const loadAsync = async () => {
+      if (currentSong.platform === 'qq' && !currentSong.src) {
+         const url = await fetchQQPlayUrl(currentSong.id);
+         if (isMounted && url) setRealSrc(url);
+      }
+      if (!currentSong.lrc) {
+         let txt = "";
+         if (currentSong.platform === 'qq') txt = await fetchQQLyric(currentSong.id);
+         else txt = await fetchNeteaseLyric(currentSong.id);
+         if (isMounted && txt) setRealLrc(txt);
+      }
+    };
+    loadAsync();
+    return () => { isMounted = false; };
   }, [currentIndex, currentSong]);
 
-  const getAudioSrc = (song) => {
-    if(song.src) return song.src; 
-    return \`https://music.163.com/song/media/outer/url?id=\${song.id}.mp3\`;
-  };
+  useEffect(() => {
+    if (realLrc) setLyricsLines(parseLrc(realLrc));
+    setActiveLyricIndex(0);
+  }, [realLrc]);
 
   const togglePlay = () => {
     if (!audioRef.current) return;
-    if (isPlaying) {
-      audioRef.current.pause();
-    } else {
-      audioRef.current.play().catch(console.warn);
-    }
+    if (isPlaying) audioRef.current.pause();
+    else audioRef.current.play().catch(console.warn);
     setIsPlaying(!isPlaying);
   };
 
-  const playNext = () => {
-    const next = (currentIndex + 1) % playlist.length;
+  const changeSong = (dir) => {
+    const len = playlist.length;
+    let next = dir === 'next' ? (currentIndex + 1) % len : (currentIndex - 1 + len) % len;
     setCurrentIndex(next);
-    setIsPlaying(true); 
-  };
-
-  const playPrev = () => {
-    const prev = (currentIndex - 1 + playlist.length) % playlist.length;
-    setCurrentIndex(prev);
     setIsPlaying(true);
   };
 
   const handleAudioError = () => {
-    console.warn(\`Song load failed. Skipping...\`);
+    if (!realSrc) return;
     setLoadError(true);
-    setTimeout(() => playNext(), 1000);
+    if(playlist.length > 1 && isPlaying) setTimeout(() => changeSong('next'), 2000);
   };
 
   useEffect(() => {
-    if (isPlaying && audioRef.current) {
-      const timer = setTimeout(() => {
-        audioRef.current.play().catch(() => setIsPlaying(false));
-      }, 50);
-      return () => clearTimeout(timer);
+    if (isPlaying && audioRef.current && realSrc) {
+      const t = setTimeout(() => audioRef.current.play().catch(() => setIsPlaying(false)), 200);
+      return () => clearTimeout(t);
     }
-  }, [currentIndex]); 
+  }, [realSrc, currentIndex]);
 
   const onTimeUpdate = () => {
     const audio = audioRef.current;
     if (audio && !isDragging) { 
-      const current = audio.currentTime;
-      const duration = audio.duration || 1;
-      setProgress((current / duration) * 100);
-
+      setProgress((audio.currentTime / (audio.duration || 1)) * 100);
       if (lyricsLines.length > 0) {
-        let index = lyricsLines.findIndex(line => line.time > current) - 1;
-        if (index < 0) {
-            index = lyricsLines.findIndex(line => line.time > current);
-            index = index === -1 ? lyricsLines.length - 1 : 0; 
+        let idx = -1;
+        for(let i=0; i<lyricsLines.length; i++) {
+           if(lyricsLines[i].time > audio.currentTime) break;
+           idx = i;
         }
-        
-        const exactIndex = lyricsLines.findIndex((line, i) => {
-            const nextLine = lyricsLines[i + 1];
-            return current >= line.time && (!nextLine || current < nextLine.time);
-        });
-        
-        if (exactIndex !== -1 && exactIndex !== activeLyricIndex) {
-            setActiveLyricIndex(exactIndex);
-        }
+        if(idx !== -1 && idx !== activeLyricIndex) setActiveLyricIndex(idx);
       }
     }
   };
 
-  const handleSeekStart = () => {
-    setIsPlaying(false);
-    setIsDragging(true);
-  };
-
-  const handleSeek = (e) => {
-    const val = parseFloat(e.target.value);
-    setProgress(val); 
-  };
-
+  const handleSeek = (e) => setProgress(parseFloat(e.target.value));
   const handleSeekEnd = (e) => {
     setIsDragging(false);
-    const val = parseFloat(e.target.value);
-    if (audioRef.current) {
-      const duration = audioRef.current.duration || 1;
-      audioRef.current.currentTime = (val / 100) * duration;
-      if (!audioRef.current.paused || isPlaying) {
-          audioRef.current.play().catch(console.warn);
-          setIsPlaying(true);
-      }
-    }
+    if(audioRef.current) audioRef.current.currentTime = (parseFloat(e.target.value)/100) * (audioRef.current.duration||0);
   };
-
-  useEffect(() => {
-    if (middleAreaRef.current) {
-      middleAreaRef.current.scrollTop = 0;
-    }
-  }, [showLyrics]);
 
   useEffect(() => {
     if (showLyrics && lyricsContainerRef.current) {
-      const activeEl = lyricsContainerRef.current.querySelector(\`.lyric-line-\${activeLyricIndex}\`);
-      if (activeEl) {
-        const scrollWait = setTimeout(() => {
-             activeEl.scrollIntoView({
-                behavior: 'smooth',
-                block: 'center', 
-            });
-        }, 100);
-        return () => clearTimeout(scrollWait);
-      }
+      const el = lyricsContainerRef.current.querySelector(\`.lyric-active\`);
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
   }, [activeLyricIndex, showLyrics]);
 
-  const toggleMute = () => {
-    if (audioRef.current) {
-      audioRef.current.muted = !isMuted;
-      setIsMuted(!isMuted);
-    }
-  };
+  useEffect(() => { if(audioRef.current) audioRef.current.volume = volume; }, [volume]);
 
-  const handleVolumeChange = (e) => {
-    const val = parseFloat(e.target.value);
-    setVolume(val);
-    if (audioRef.current) {
-      audioRef.current.volume = val;
-      if (val > 0 && isMuted) {
-          setIsMuted(false);
-          audioRef.current.muted = false;
-      }
-    }
-  };
-  
-  useEffect(() => {
-      if(audioRef.current) audioRef.current.volume = volume;
-  }, []);
-
-  const VolumeIcon = isMuted || volume === 0 ? VolumeX : volume < 0.5 ? Volume1 : Volume2;
-  
   const getRgba = (hex, alpha) => {
       let r=0,g=0,b=0;
       if(!hex) return \`rgba(0,0,0,\${alpha})\`;
-      if(hex.length===4){
-          r=parseInt(hex[1]+hex[1],16);g=parseInt(hex[2]+hex[2],16);b=parseInt(hex[3]+hex[3],16);
-      } else if(hex.length===7){
-          r=parseInt(hex.slice(1,3),16); g=parseInt(hex.slice(3,5),16); b=parseInt(hex.slice(5,7),16);
+      const h = hex.replace('#','');
+      if(h.length===6){
+          r=parseInt(h.substring(0,2),16); g=parseInt(h.substring(2,4),16); b=parseInt(h.substring(4,6),16);
       }
       return \`rgba(\${r},\${g},\${b},\${alpha})\`;
   }
   const bgStyle = { backgroundColor: getRgba(primaryColor, 0.25) };
+
+  const VolumeIcon = isMuted || volume === 0 ? VolumeX : volume < 0.5 ? Volume1 : Volume2;
 
   return (
     <div 
@@ -244,72 +238,40 @@ const MusicPlayer = ({ playlist, primaryColor }) => {
     >
       <audio
         ref={audioRef}
-        src={getAudioSrc(currentSong)}
+        src={realSrc}
         onTimeUpdate={onTimeUpdate}
-        onEnded={playNext}
+        onEnded={() => changeSong('next')}
         onError={handleAudioError}
         preload="auto"
       />
 
       <div className="absolute top-[-50%] left-[-50%] w-[200%] h-[200%] bg-gradient-to-br from-transparent via-white/5 to-transparent rounded-full pointer-events-none opacity-20 animate-pulse" style={{ animationDuration: '4s' }} />
       
-      {/* 顶部栏 */}
-      <div className="flex items-center justify-between relative z-20 mb-1">
+      <div className="flex items-center justify-between relative z-20 mb-1 flex-shrink-0">
         <div className="flex items-center gap-2">
           <div className="flex gap-[3px] items-end h-4">
-            <span className={\`w-1 bg-[#ec4141] rounded-sm transition-all duration-300 \${isPlaying ? 'animate-[music-bar_0.8s_ease-in-out_infinite]' : 'h-1 opacity-50'}\`}></span>
-            <span className={\`w-1 bg-[#ec4141] rounded-sm transition-all duration-300 delay-75 \${isPlaying ? 'animate-[music-bar_1.0s_ease-in-out_infinite]' : 'h-2 opacity-50'}\`}></span>
-            <span className={\`w-1 bg-[#ec4141] rounded-sm transition-all duration-300 delay-150 \${isPlaying ? 'animate-[music-bar_0.6s_ease-in-out_infinite]' : 'h-1 opacity-50'}\`}></span>
+            {[1,2,3].map(i=><span key={i} className={\`w-1 bg-[#ec4141] rounded-sm transition-all duration-300 \${isPlaying ? 'animate-pulse h-3' : 'h-1 opacity-50'}\`}></span>)}
           </div>
           <span className="text-[10px] font-bold text-[#ec4141] uppercase tracking-widest truncate max-w-[80px]">
-            {loadError ? "Error" : "Playing"}
+            {loadError ? "Error" : isPlaying ? "Playing" : "Paused"}
           </span>
         </div>
-
         <div className="flex items-center gap-3">
             <div className="flex items-center gap-1 group/vol">
-                <div className="w-0 overflow-hidden group-hover/vol:w-16 transition-all duration-300 ease-out flex items-center">
-                    <input 
-                        type="range" 
-                        min="0" max="1" step="0.05"
-                        value={isMuted ? 0 : volume}
-                        onChange={handleVolumeChange}
-                        className="w-14 h-1 bg-white/20 rounded-lg appearance-none cursor-pointer"
-                    />
-                </div>
-                <button onClick={toggleMute} className="text-white/50 hover:text-white transition-colors">
-                    <VolumeIcon size={16} />
-                </button>
+                <input type="range" min="0" max="1" step="0.05" value={isMuted?0:volume} onChange={e=>{setVolume(parseFloat(e.target.value));setIsMuted(false)}} className="w-14 h-1 bg-white/20 rounded-lg appearance-none cursor-pointer" />
+                <button onClick={()=>setIsMuted(!isMuted)} className="text-white/50 hover:text-white"><VolumeIcon size={16} /></button>
             </div>
-
-            <button 
-                onClick={() => setShowLyrics(!showLyrics)}
-                className={\`transition-colors \${showLyrics ? 'text-white' : 'text-white/50 hover:text-white'}\`}
-                title="Lyrics"
-            >
+            <button onClick={() => setShowLyrics(!showLyrics)} className={\`transition-colors \${showLyrics ? 'text-white' : 'text-white/50 hover:text-white'}\`}>
                 {showLyrics ? <X size={18} /> : <ListMusic size={18} />}
             </button>
         </div>
       </div>
 
-      {/* 中间区域 */}
-      <div ref={middleAreaRef} className="flex-1 relative flex items-center justify-center overflow-hidden mb-1">
-        
-        {/* 封面视图 */}
-        <div className={\`absolute inset-0 flex flex-col items-center justify-center transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] 
-          \${showLyrics 
-            ? 'opacity-0 scale-90 -translate-y-8 pointer-events-none' 
-            : 'opacity-100 scale-100 translate-y-0'
-          }\`}
-        >
+      <div className="flex-1 relative w-full overflow-hidden mb-1 min-h-0">
+        <div className={\`absolute inset-0 flex flex-col items-center justify-center transition-transform duration-500 ease-in-out \${showLyrics ? '-translate-x-full opacity-0' : 'translate-x-0 opacity-100'}\`}>
           <div className="relative w-24 h-24 mb-2">
-             <div className={\`w-full h-full rounded-full border-[5px] border-black bg-black shadow-xl flex items-center justify-center \${isPlaying ? 'animate-[spin_8s_linear_infinite]' : ''}\`} style={{ animationPlayState: isPlaying ? 'running' : 'paused' }}>
-                <img 
-                  src={secureUrl(currentSong.cover)} 
-                  alt="Cover" 
-                  className="w-full h-full rounded-full object-cover opacity-90 border border-white/10" 
-                />
-                <div className="absolute w-2.5 h-2.5 bg-[#1a1a1a] rounded-full border border-white/20 z-10" />
+             <div className={\`w-full h-full rounded-full border-[4px] border-black bg-black shadow-xl flex items-center justify-center \${isPlaying ? 'animate-[spin_8s_linear_infinite]' : ''}\`} style={{ animationPlayState: isPlaying ? 'running' : 'paused' }}>
+                <img src={secureUrl(currentSong.cover)} className="w-full h-full rounded-full object-cover opacity-90 border border-white/10" onError={(e)=>{e.target.src="https://via.placeholder.com/100?text=Music"}} />
              </div>
           </div>
           <div className="text-center w-full px-2">
@@ -318,76 +280,28 @@ const MusicPlayer = ({ playlist, primaryColor }) => {
           </div>
         </div>
 
-        {/* 歌词视图 */}
-        <div className={\`absolute inset-0 transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] 
-          \${showLyrics 
-            ? 'opacity-100 scale-100 translate-y-0' 
-            : 'opacity-0 scale-110 translate-y-8 pointer-events-none'
-          }\`}
-        >
-          <div 
-            ref={lyricsContainerRef}
-            className="w-full h-full overflow-y-auto no-scrollbar mask-image-linear-fade text-center py-[50%]" 
-          >
-            {lyricsLines.length > 0 ? (
-              lyricsLines.map((line, i) => (
-                <p 
-                  key={i} 
-                  className={\`lyric-line-\${i} text-xs py-2 transition-all duration-500 \${i === activeLyricIndex ? 'text-[#ec4141] font-bold scale-110 blur-0' : 'text-gray-500 scale-100 blur-[0.5px]'}\`}
-                >
-                  {line.text}
-                </p>
-              ))
-            ) : (
-              <div className="flex flex-col items-center justify-center h-full">
-                <p className="text-xs text-gray-500">纯音乐 / 无歌词</p>
-              </div>
-            )}
+        <div className={\`absolute inset-0 transition-transform duration-500 ease-in-out \${showLyrics ? 'translate-x-0 opacity-100' : 'translate-x-full opacity-0'}\`}>
+          <div ref={lyricsContainerRef} className="w-full h-full overflow-y-auto no-scrollbar text-center" style={{ padding: '50% 0' }}>
+            {lyricsLines.length > 0 ? lyricsLines.map((line, i) => (
+                <p key={i} className={\`text-xs py-2 transition-all duration-300 \${i === activeLyricIndex ? 'lyric-active text-[#ec4141] font-bold scale-110 blur-0' : 'text-gray-500 scale-100 blur-[0.5px]'}\`}>{line.text}</p>
+            )) : <p className="text-xs text-gray-500 pt-10">...</p>}
           </div>
         </div>
       </div>
 
-      {/* 底部控制栏 */}
-      <div className="relative z-20 mt-auto">
+      <div className="relative z-20 mt-auto flex-shrink-0">
         <div className="w-full h-3 flex items-center justify-center relative group/progress mb-1">
             <div className="w-full h-1 bg-white/10 rounded-full overflow-hidden">
-                <div 
-                    className="h-full bg-[#ec4141] rounded-full relative transition-all duration-100 ease-linear" 
-                    style={{ width: \`\${progress}%\` }}
-                />
+                <div className="h-full bg-[#ec4141] rounded-full relative" style={{ width: \`\${progress}%\` }} />
             </div>
-            <input 
-                type="range" 
-                min="0" max="100" step="0.1"
-                value={progress}
-                onMouseDown={handleSeekStart} 
-                onTouchStart={handleSeekStart}
-                onChange={handleSeek}         
-                onMouseUp={handleSeekEnd}     
-                onTouchEnd={handleSeekEnd}
-                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-            />
-            <div 
-                className={\`absolute h-3 w-3 bg-white rounded-full shadow-md pointer-events-none transition-opacity duration-200 \${isDragging ? 'opacity-100 scale-110' : 'opacity-0 group-hover/progress:opacity-100'}\`}
-                style={{ left: \`\${progress}%\`, transform: 'translateX(-50%)' }}
-            />
+            <input type="range" min="0" max="100" step="0.1" value={progress} onMouseDown={()=>setIsDragging(true)} onTouchStart={()=>setIsDragging(true)} onChange={handleSeek} onMouseUp={handleSeekEnd} onTouchEnd={handleSeekEnd} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" />
         </div>
-
         <div className="flex items-center justify-between px-4 pb-1">
-          <button onClick={playPrev} className="text-gray-400 hover:text-white transition-colors p-2 hover:bg-white/5 rounded-full">
-            <SkipBack size={20} fill="currentColor" className="opacity-80"/>
-          </button>
-          
-          <button 
-            onClick={togglePlay} 
-            className="w-12 h-12 rounded-full bg-white/10 hover:bg-[#ec4141] text-white flex items-center justify-center transition-all duration-300 border border-white/5 hover:scale-105 shadow-lg active:scale-95"
-          >
+          <button onClick={()=>changeSong('prev')} className="text-gray-400 hover:text-white p-2"><SkipBack size={20} /></button>
+          <button onClick={togglePlay} className="w-12 h-12 rounded-full bg-white/10 hover:bg-[#ec4141] text-white flex items-center justify-center transition-all border border-white/5 hover:scale-105 shadow-lg active:scale-95">
             {isPlaying ? <Pause size={20} fill="currentColor" /> : <Play size={20} fill="currentColor" className="ml-0.5" />}
           </button>
-          
-          <button onClick={playNext} className="text-gray-400 hover:text-white transition-colors p-2 hover:bg-white/5 rounded-full">
-            <SkipForward size={20} fill="currentColor" className="opacity-80"/>
-          </button>
+          <button onClick={()=>changeSong('next')} className="text-gray-400 hover:text-white p-2"><SkipForward size={20} /></button>
         </div>
       </div>
     </div>
@@ -396,7 +310,7 @@ const MusicPlayer = ({ playlist, primaryColor }) => {
 `;
 
 // ==================================================================================
-// 3. Preview 组件代码 (直接注入)
+// 4. Preview 组件代码
 // ==================================================================================
 const PREVIEW_CODE = `
 const { Github, Twitter, Linkedin, Globe, ArrowUpRight, Folder } = Icons;
@@ -405,6 +319,10 @@ const IconMap = {
   twitter: Twitter,
   linkedin: Linkedin,
   web: Globe,
+  qq: Icons.QQ,
+  wechat: Icons.WeChat,
+  bilibili: Icons.Bilibili,
+  tiktok: Icons.TikTok,
 };
 
 const hexToRgba = (hex, alpha = 1) => {
@@ -426,16 +344,18 @@ const Preview = ({ data }) => {
   const primary = data.primaryColor || "#000000";
   const cardBackgroundColor = hexToRgba(primary, 0.25);
 
+  const handleImgError = (e) => {
+    e.target.onerror = null;
+    e.target.src = 'https://via.placeholder.com/150?text=Image+Not+Found';
+  };
+
   return (
     <div className="relative min-h-screen w-full flex items-center justify-center p-6 md:p-10 lg:p-16 bg-[#09090b] overflow-hidden font-sans text-slate-200">
-      
-      {/* 遮罩 */}
       <div className="absolute top-0 left-0 w-1/2 h-full bg-black z-50 pointer-events-none" style={{ animation: 'curtainLeft 1.2s cubic-bezier(0.77, 0, 0.175, 1) forwards 0.2s' }} />
       <div className="absolute top-0 right-0 w-1/2 h-full bg-black z-50 pointer-events-none" style={{ animation: 'curtainRight 1.2s cubic-bezier(0.77, 0, 0.175, 1) forwards 0.2s' }} />
 
-      {/* 背景 */}
       <div className="absolute inset-0 z-0">
-        <img src={data.bgPreview} alt="Background" className="w-full h-full object-cover transition-opacity duration-700" />
+        <img src={data.bgPreview} alt="Background" className="w-full h-full object-cover transition-opacity duration-700" onError={handleImgError} />
         <div className="absolute inset-0 bg-black/40" />
         <div className="absolute inset-0 overflow-hidden">
           {[...Array(20)].map((_, i) => (
@@ -457,14 +377,13 @@ const Preview = ({ data }) => {
 
       <div className="relative z-10 max-w-5xl w-full grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
         
-        {/* 1. Profile */}
         <div 
           className="md:col-span-2 rounded-3xl border border-white/10 backdrop-blur-md p-6 sm:p-8 shadow-2xl animate-fade-up"
           style={{ animationDelay: '0.6s', backgroundColor: cardBackgroundColor }}
         >
           <div className="flex flex-col md:flex-row md:items-center gap-6">
             <div className="flex-shrink-0 flex justify-center md:justify-start">
-              <img src={data.avatarPreview} alt="Avatar" className="w-24 h-24 sm:w-28 sm:h-28 rounded-full object-cover border-2 border-white/20 shadow-lg" />
+              <img src={data.avatarPreview} alt="Avatar" className="w-24 h-24 sm:w-28 sm:h-28 rounded-full object-cover border-2 border-white/20 shadow-lg" onError={handleImgError} />
             </div>
             <div className="flex-1 text-center md:text-left space-y-3">
               <div>
@@ -493,10 +412,8 @@ const Preview = ({ data }) => {
           </div>
         </div>
 
-        {/* 2. Music Player */}
         <MusicPlayer playlist={data.playlist} primaryColor={primary} />
 
-        {/* 3. Tech Stack */}
         <div 
           className="md:col-span-2 rounded-3xl border border-white/10 backdrop-blur-md p-6 shadow-xl animate-fade-up"
           style={{ animationDelay: '0.8s', backgroundColor: cardBackgroundColor }}
@@ -512,7 +429,6 @@ const Preview = ({ data }) => {
           </div>
         </div>
 
-        {/* 4. Articles */}
         <div 
           className="rounded-3xl border border-white/10 backdrop-blur-md p-6 shadow-xl animate-fade-up"
           style={{ animationDelay: '0.9s', backgroundColor: cardBackgroundColor }}
@@ -531,7 +447,6 @@ const Preview = ({ data }) => {
           </div>
         </div>
 
-        {/* 5. Projects */}
         {data.projects?.map((proj, i) => (
             <a
               key={i}
@@ -544,7 +459,7 @@ const Preview = ({ data }) => {
               <div className="flex justify-between items-start mb-4">
                 <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-gray-700/50 to-gray-900/50 border border-white/10 flex items-center justify-center overflow-hidden">
                    {proj.image ? (
-                     <img src={proj.image} alt={proj.title} className="w-full h-full object-cover" />
+                     <img src={proj.image} alt={proj.title} className="w-full h-full object-cover" onError={handleImgError} />
                    ) : (
                      <Folder size={20} className="text-white/80" />
                    )}
@@ -566,59 +481,133 @@ const Preview = ({ data }) => {
 `;
 
 // ==================================================================================
-// 4. 生成 Zip 主逻辑
+// 5. 生成 Zip 主逻辑
 // ==================================================================================
 export const generateZip = async (data) => {
   const zip = new JSZip();
   const assetsFolder = zip.folder("assets");
   const safeName = (data.name || "My_Portfolio").replace(/\s+/g, "_");
 
-  // 深拷贝数据
   const exportData = JSON.parse(JSON.stringify(data));
   
-  // 填充默认播放列表
   if (!exportData.playlist || exportData.playlist.length === 0) {
     exportData.playlist = DEFAULT_PLAYLIST;
   }
 
-  // === 1. 头像处理 ===
+  // 默认资源路径
+  const DEFAULT_AVATAR = "/images/avatar/IUNO.png";
+  const DEFAULT_BG = "/images/background/Iuno.jpg";
+
+  // 辅助函数：从 URL/路径 fetch 资源并写入 assets
+  const fetchAndAddToAssets = async (rawPath, filename) => {
+    if (!rawPath) return null;
+
+    // 如果路径包含 blob:，说明是 blob URL（内存引用），无法 fetch，跳过
+    if (rawPath.includes('blob:')) {
+      console.warn(`[Export] ✗ Skipping blob URL (cannot fetch): ${rawPath}`);
+      return null;
+    }
+
+    // 构建绝对 URL
+    let fetchUrl = rawPath;
+    if (rawPath.startsWith('/')) {
+      fetchUrl = new URL(rawPath, window.location.origin).href;
+    } else if (!rawPath.startsWith('http')) {
+      fetchUrl = new URL('/' + rawPath, window.location.origin).href;
+    }
+
+    console.log(`[Export] Fetching: ${fetchUrl}`);
+
+    try {
+      const res = await fetch(fetchUrl);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      
+      const contentType = res.headers.get('content-type') || '';
+      if (contentType.includes('text/html')) throw new Error('Got HTML (likely 404)');
+
+      const blob = await res.blob();
+      assetsFolder.file(filename, blob);
+      console.log(`[Export] ✓ Added ${filename} to assets`);
+      return `assets/${filename}`;
+    } catch (e) {
+      console.warn(`[Export] ✗ Failed to fetch ${fetchUrl}:`, e.message);
+      return null;
+    }
+  };
+
+  // 1. 头像处理
   if (data.avatar instanceof File || data.avatar instanceof Blob) {
+    // 用户上传了新头像（File 对象）
     const ext = data.avatar.name?.split(".").pop() || "png";
-    const filename = `avatar.${ext}`;
-    assetsFolder.file(filename, data.avatar);
-    exportData.avatarPreview = `assets/${filename}`;
-  }
-
-  // === 2. 背景图处理 (这里修正为使用 data.bg) ===
-  // 注意：在 Editor.jsx 中，ImageUpload(e, "bg") 意味着文件在 data.bg
-  if (data.bg instanceof File || data.bg instanceof Blob) {
-    // 情况 A：用户上传了新背景
-    const ext = data.bg.name?.split(".").pop() || "jpg";
-    const filename = `background.${ext}`;
-    assetsFolder.file(filename, data.bg);
-    exportData.bgPreview = `assets/${filename}`;
-  } else if (typeof data.bgPreview === "string" && !data.bgPreview.startsWith("blob:")) {
-    // 情况 B：默认 URL 或外部 URL
-    exportData.bgPreview = data.bgPreview;
+    assetsFolder.file(`avatar.${ext}`, data.avatar);
+    exportData.avatarPreview = `assets/avatar.${ext}`;
+    console.log(`[Export] ✓ User avatar (File) added to assets`);
   } else {
-    // 情况 C：兜底
-    exportData.bgPreview = "https://via.placeholder.com/1920x1080.png?text=Background";
+    // 没有 File 对象，尝试从 avatarPreview 或默认路径 fetch
+    const avatarPath = data.avatarPreview || DEFAULT_AVATAR;
+    // 如果 avatarPath 是 blob URL，跳过打包，使用默认路径
+    if (avatarPath.includes('blob:')) {
+      console.warn(`[Export] Avatar is blob URL, falling back to default`);
+      const ext = DEFAULT_AVATAR.endsWith('.png') ? 'png' : 'jpg';
+      const result = await fetchAndAddToAssets(DEFAULT_AVATAR, `avatar.${ext}`);
+      exportData.avatarPreview = result || DEFAULT_AVATAR;
+    } else {
+      const ext = avatarPath.endsWith('.png') ? 'png' : 'jpg';
+      const result = await fetchAndAddToAssets(avatarPath, `avatar.${ext}`);
+      exportData.avatarPreview = result || avatarPath;
+    }
   }
 
-  // === 3. 音乐文件处理 ===
-  await Promise.all(
-    (data.playlist || []).map(async (item, index) => {
-      if (item.file instanceof File || item.file instanceof Blob) {
-        const ext = item.file.name?.split(".").pop() || "mp3";
-        const filename = `music_${index}.${ext}`;
-        assetsFolder.file(filename, item.file);
-        exportData.playlist[index].src = `assets/${filename}`;
-      }
-    })
-  );
+  // 2. 背景处理
+  if (data.bg instanceof File || data.bg instanceof Blob) {
+    // 用户上传了新背景（File 对象）
+    const ext = data.bg.name?.split(".").pop() || "jpg";
+    assetsFolder.file(`background.${ext}`, data.bg);
+    exportData.bgPreview = `assets/background.${ext}`;
+    console.log(`[Export] ✓ User background (File) added to assets`);
+  } else {
+    // 没有 File 对象，尝试从 bgPreview 或默认路径 fetch
+    const bgPath = data.bgPreview || DEFAULT_BG;
+    // 如果 bgPath 是 blob URL，跳过打包，使用默认路径
+    if (bgPath.includes('blob:')) {
+      console.warn(`[Export] Background is blob URL, falling back to default`);
+      const ext = DEFAULT_BG.endsWith('.png') ? 'png' : 'jpg';
+      const result = await fetchAndAddToAssets(DEFAULT_BG, `background.${ext}`);
+      exportData.bgPreview = result || DEFAULT_BG;
+    } else {
+      const ext = bgPath.endsWith('.png') ? 'png' : 'jpg';
+      const result = await fetchAndAddToAssets(bgPath, `background.${ext}`);
+      exportData.bgPreview = result || bgPath;
+    }
+  }
 
-  // === 构建 HTML ===
-  const html = `<!DOCTYPE html>
+  // 3. 处理歌单封面（如果需要）
+  if (exportData.playlist && Array.isArray(exportData.playlist)) {
+    for (let i = 0; i < exportData.playlist.length; i++) {
+      const song = exportData.playlist[i];
+      if (!song || !song.cover) continue;
+      
+      // 跳过已经是外部 https URL 的封面（无需打包）
+      if (song.cover.startsWith('https://')) continue;
+      
+      const result = await fetchAndAddToAssets(song.cover, `cover_${i}.jpg`);
+      if (result) song.cover = result;
+    }
+  }
+
+  // 4. 处理项目图片（如果需要）
+  if (exportData.projects && Array.isArray(exportData.projects)) {
+    for (let i = 0; i < exportData.projects.length; i++) {
+      const proj = exportData.projects[i];
+      if (!proj || !proj.image) continue;
+      
+      // 跳过已经是外部 https URL 的图片（无需打包）
+      if (proj.image.startsWith('https://')) continue;
+      
+      const result = await fetchAndAddToAssets(proj.image, `proj_${i}.jpg`);
+      if (result) proj.image = result;
+    }
+  }  const html = `<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8" />
@@ -631,54 +620,27 @@ export const generateZip = async (data) => {
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
   <style>
-    @keyframes fadeUp {
-      from { opacity: 0; transform: translateY(30px) scale(0.98); filter: blur(4px); }
-      to { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
-    }
-    @keyframes curtainLeft {
-      0% { transform: translateX(0); }
-      100% { transform: translateX(-100%); }
-    }
-    @keyframes curtainRight {
-      0% { transform: translateX(0); }
-      100% { transform: translateX(100%); }
-    }
-    @keyframes music-bar {
-      0%, 100% { height: 4px; opacity: 0.5; }
-      50% { height: 16px; opacity: 1; }
-    }
-    @keyframes floatUp {
-      0% { transform: translateY(100%); opacity: 0; }
-      20% { opacity: 0.8; }
-      100% { transform: translateY(-20%); opacity: 0; }
-    }
-    @keyframes spin {
-      from { transform: rotate(0deg); }
-      to { transform: rotate(360deg); }
-    }
-    .animate-fade-up {
-      animation: fadeUp 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
-    }
+    /* ...styles... */
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(30px) scale(0.98); filter: blur(4px); } to { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); } }
+    @keyframes curtainLeft { 0% { transform: translateX(0); } 100% { transform: translateX(-100%); } }
+    @keyframes curtainRight { 0% { transform: translateX(0); } 100% { transform: translateX(100%); } }
+    @keyframes music-bar { 0%, 100% { height: 4px; opacity: 0.5; } 50% { height: 16px; opacity: 1; } }
+    @keyframes floatUp { 0% { transform: translateY(100%); opacity: 0; } 20% { opacity: 0.8; } 100% { transform: translateY(-20%); opacity: 0; } }
+    @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+    .animate-fade-up { animation: fadeUp 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) both; }
     .no-scrollbar::-webkit-scrollbar { display: none; }
     .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-    .mask-image-linear-fade {
-      mask-image: linear-gradient(to bottom, transparent 0%, black 20%, black 80%, transparent 100%);
-      -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 20%, black 80%, transparent 100%);
-    }
+    .mask-image-linear-fade { mask-image: linear-gradient(to bottom, transparent 0%, black 20%, black 80%, transparent 100%); -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 20%, black 80%, transparent 100%); }
   </style>
 </head>
 <body>
   <div id="root"></div>
-
   <script type="text/babel">
     const userData = ${JSON.stringify(exportData)};
-
+    ${API_LOGIC_STRING}
     ${ICONS_JS_STRING}
-
     ${MUSIC_PLAYER_CODE}
-
     ${PREVIEW_CODE}
-
     const root = ReactDOM.createRoot(document.getElementById('root'));
     root.render(<Preview data={userData} />);
   </script>
@@ -686,7 +648,6 @@ export const generateZip = async (data) => {
 </html>`;
 
   zip.file("index.html", html);
-
   const blob = await zip.generateAsync({ type: "blob" });
   saveAs(blob, `${safeName}_Portfolio.zip`);
 };

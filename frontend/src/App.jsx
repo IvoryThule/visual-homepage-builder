@@ -63,6 +63,8 @@ const initialData = {
   primaryColor: "#000000",
   avatar: null,
   background: null,
+  // === 新增：初始化播放列表 ===
+  playlist: [],
   // 默认使用 public 静态目录下的图片，Vite 会直接提供这些资源
   avatarPreview: "/images/avatar/IUNO.png",
   bgPreview: "/images/background/Iuno.jpg",

@@ -1,10 +1,13 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import CategoryCard from "./ui/CategoryCard.jsx";
 import Input from "./ui/Input.jsx";
 import Textarea from "./ui/Textarea.jsx";
 import Button from "./ui/Button.jsx";
 import Badge from "./ui/Badge.jsx";
+import { Search, Plus, Trash2, CloudDownload, Music } from "lucide-react"; // 引入图标
+
+import { fetchNeteasePlaylist, searchQQMusic } from "../utils/musicApi";
 
 const SOCIAL_ICON_OPTIONS = [
   { label: "GitHub", value: "github" },
@@ -19,6 +22,12 @@ const SOCIAL_ICON_OPTIONS = [
 
 export default function Editor({ data, setData }) {
   const navigate = useNavigate();
+  
+  // === 新增状态：音乐编辑器相关 ===
+  const [musicTab, setMusicTab] = useState("list"); // 'list' | 'netease' | 'qq'
+  const [musicInput, setMusicInput] = useState(""); // 用于搜索框或歌单ID输入
+  const [musicLoading, setMusicLoading] = useState(false);
+  const [searchResults, setSearchResults] = useState([]); // QQ搜索结果
 
   const loggedUsername = typeof window !== "undefined" ? localStorage.getItem("loggedUsername") : null;
   const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
@@ -132,6 +141,61 @@ export default function Editor({ data, setData }) {
     const next = [...data.articles];
     next.splice(index, 1);
     updateField("articles", next);
+  };
+
+  // === 新增音乐处理函数 ===
+
+  // 1. 删除歌曲
+  const removeSong = (index) => {
+    const next = [...(data.playlist || [])];
+    next.splice(index, 1);
+    updateField("playlist", next);
+  };
+
+  // 2. 网易云导入
+  const handleNeteaseImport = async () => {
+    if (!musicInput) return alert("请输入歌单 ID");
+    setMusicLoading(true);
+    try {
+      // 调用我们在 musicApi.js 里写的函数
+      const songs = await fetchNeteasePlaylist(musicInput);
+      if (songs.length === 0) {
+        alert("未找到歌曲，请检查 ID 或确认歌单公开");
+      } else {
+        // 追加到现有列表
+        const next = [...(data.playlist || []), ...songs];
+        updateField("playlist", next);
+        setMusicInput(""); // 清空输入
+        alert(`成功导入 ${songs.length} 首歌曲`);
+        setMusicTab("list"); // 切回列表视图
+      }
+    } catch (e) {
+      console.error(e);
+      alert("导入失败，请检查控制台");
+    } finally {
+      setMusicLoading(false);
+    }
+  };
+
+  // 3. QQ 音乐搜索
+  const handleQQSearch = async () => {
+    if (!musicInput) return;
+    setMusicLoading(true);
+    try {
+      const results = await searchQQMusic(musicInput);
+      setSearchResults(results);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setMusicLoading(false);
+    }
+  };
+
+  // 4. 添加搜索到的 QQ 歌曲
+  const addQQSong = (song) => {
+    const next = [...(data.playlist || []), song];
+    updateField("playlist", next);
+    // 可选：添加后是否清空结果？这里不清空方便继续添加
   };
 
   return (
@@ -251,6 +315,132 @@ export default function Editor({ data, setData }) {
             </div>
           </div>
         </div>
+      </CategoryCard>
+
+      {/* === 新增：音乐配置卡片 === */}
+      <CategoryCard title="Music Player / 音乐播放器">
+        
+        {/* 顶部 Tab 切换 */}
+        <div className="flex bg-gray-900/50 p-1 rounded-lg mb-3 border border-gray-800">
+          <button
+            onClick={() => setMusicTab("list")}
+            className={`flex-1 py-1.5 text-[10px] rounded-md transition-all ${
+              musicTab === "list" ? "bg-gray-700 text-white shadow-sm" : "text-gray-400 hover:text-gray-200"
+            }`}
+          >
+            当前列表 ({data.playlist?.length || 0})
+          </button>
+          <button
+            onClick={() => { setMusicTab("netease"); setMusicInput(""); }}
+            className={`flex-1 py-1.5 text-[10px] rounded-md transition-all ${
+              musicTab === "netease" ? "bg-red-900/30 text-red-200 border border-red-900/50" : "text-gray-400 hover:text-gray-200"
+            }`}
+          >
+            网易云导入
+          </button>
+          <button
+            onClick={() => { setMusicTab("qq"); setMusicInput(""); setSearchResults([]); }}
+            className={`flex-1 py-1.5 text-[10px] rounded-md transition-all ${
+              musicTab === "qq" ? "bg-green-900/30 text-green-200 border border-green-900/50" : "text-gray-400 hover:text-gray-200"
+            }`}
+          >
+            QQ音乐搜索
+          </button>
+        </div>
+
+        {/* Tab 内容：当前列表 */}
+        {musicTab === "list" && (
+          <div className="space-y-2">
+            {!data.playlist?.length && (
+              <div className="text-center py-4 text-gray-500 border border-dashed border-gray-800 rounded-lg">
+                暂无歌曲，请切换 Tab 添加
+              </div>
+            )}
+            {data.playlist?.map((song, i) => (
+              <div key={i} className="flex items-center justify-between bg-gray-900/30 p-2 rounded border border-gray-800 group hover:border-gray-600 transition-colors">
+                <div className="flex items-center gap-2 overflow-hidden">
+                  <span className="text-[10px] text-gray-500 w-4">{i + 1}</span>
+                  {song.cover && <img src={song.cover} alt="" className="w-8 h-8 rounded object-cover" />}
+                  <div className="flex flex-col truncate">
+                    <span className="text-gray-200 truncate font-medium">{song.title}</span>
+                    <span className="text-[10px] text-gray-500 truncate">{song.artist}</span>
+                  </div>
+                  {/* 显示来源标记 */}
+                  <span className={`text-[9px] px-1 rounded ${song.platform === 'qq' ? 'bg-green-900/30 text-green-400' : 'bg-red-900/30 text-red-400'}`}>
+                    {song.platform === 'qq' ? 'QQ' : 'NEC'}
+                  </span>
+                </div>
+                <button
+                  onClick={() => removeSong(i)}
+                  className="p-1.5 text-gray-500 hover:text-red-400 hover:bg-white/5 rounded transition-colors"
+                >
+                  <Trash2 size={12} />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Tab 内容：网易云导入 */}
+        {musicTab === "netease" && (
+          <div className="space-y-3">
+            <div className="bg-blue-900/10 border border-blue-900/30 p-2 rounded text-[10px] text-blue-200/70">
+              <p>提示：输入网易云<b>歌单 ID</b>（数字）。</p>
+              <p>例如链接 `playlist?id=24381616` 中的 `24381616`。</p>
+            </div>
+            <div className="flex gap-2">
+              <Input 
+                value={musicInput} 
+                onChange={(e) => setMusicInput(e.target.value)} 
+                placeholder="输入歌单 ID..." 
+              />
+              <Button onClick={handleNeteaseImport} disabled={musicLoading}>
+                {musicLoading ? "..." : <CloudDownload size={14} />}
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* Tab 内容：QQ音乐搜索 */}
+        {musicTab === "qq" && (
+          <div className="space-y-3">
+             <div className="flex gap-2">
+              <Input 
+                value={musicInput} 
+                onChange={(e) => setMusicInput(e.target.value)} 
+                onKeyDown={(e) => e.key === 'Enter' && handleQQSearch()}
+                placeholder="搜索歌曲 / 歌手..." 
+              />
+              <Button onClick={handleQQSearch} disabled={musicLoading}>
+                {musicLoading ? "..." : <Search size={14} />}
+              </Button>
+            </div>
+
+            {/* 搜索结果列表 */}
+            <div className="max-h-[200px] overflow-y-auto space-y-1 custom-scrollbar pr-1">
+              {searchResults.map((song, i) => (
+                <div key={song.id} className="flex items-center justify-between p-2 rounded hover:bg-white/5 border border-transparent hover:border-gray-700 transition-all">
+                  <div className="flex items-center gap-2 overflow-hidden">
+                    <img src={song.cover} className="w-8 h-8 rounded bg-gray-800" />
+                    <div className="flex flex-col min-w-0">
+                      <span className="text-gray-200 truncate text-[11px]">{song.title}</span>
+                      <span className="text-gray-500 truncate text-[10px]">{song.artist}</span>
+                    </div>
+                  </div>
+                  <button 
+                    onClick={() => addQQSong(song)}
+                    className="p-1.5 bg-white/10 hover:bg-green-600 text-white rounded-full transition-colors"
+                  >
+                    <Plus size={12} />
+                  </button>
+                </div>
+              ))}
+              {searchResults.length === 0 && !musicLoading && musicInput && (
+                 <div className="text-center text-gray-600 text-[10px] py-2">暂无结果或未搜索</div>
+              )}
+            </div>
+          </div>
+        )}
       </CategoryCard>
 
       <CategoryCard title="Tags / 技能标签">

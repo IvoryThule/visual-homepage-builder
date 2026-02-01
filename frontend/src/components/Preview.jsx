@@ -227,7 +227,12 @@ export default function Preview({ data }) {
         </div>
 
         {/* 2. 音乐播放器 */}
-        <MusicPlayer playlist={DEFAULT_PLAYLIST} primaryColor={data.primaryColor} />
+        {(() => {
+          const activePlaylist = (data.playlist && data.playlist.length > 0) ? data.playlist : DEFAULT_PLAYLIST;
+          return (
+            <MusicPlayer playlist={activePlaylist} primaryColor={data.primaryColor} />
+          );
+        })()}
 
         {/* 3. Tech Stack */}
         <div
