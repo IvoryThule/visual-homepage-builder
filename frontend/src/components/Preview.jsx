@@ -76,6 +76,16 @@ const normalizeHex6 = (hex) => {
   return '#000000';
 };
 
+// 确保链接格式正确，自动添加 https:// 前缀
+const ensureAbsoluteUrl = (url) => {
+  if (!url) return '#';
+  const trimmed = url.trim();
+  if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+    return trimmed;
+  }
+  return `https://${trimmed}`;
+};
+
 // ==================== 主预览组件 ====================
 export default function Preview({ data }) {
   const primary = data.primaryColor || "#000000";
@@ -279,7 +289,7 @@ export default function Preview({ data }) {
           </h2>
           <div className="space-y-3">
             {data.articles?.map((a, i) => (
-              <a key={i} href={a.link} target="_blank" className="group block">
+              <a key={i} href={ensureAbsoluteUrl(a.link)} target="_blank" rel="noreferrer" className="group block">
                 <p className="text-xs font-medium text-gray-200 group-hover:text-blue-300 transition-colors truncate">
                   {a.title || "No Title"}
                 </p>
@@ -293,7 +303,7 @@ export default function Preview({ data }) {
         {data.projects?.map((proj, i) => (
           <a
             key={i}
-            href={proj.link}
+            href={ensureAbsoluteUrl(proj.link)}
             target="_blank"
             rel="noreferrer"
             // 修改点：移除了 hover:bg-black/50，因为内联背景色优先级更高。现在主要靠 border 和 translate 做 hover 效果
