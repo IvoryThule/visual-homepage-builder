@@ -385,7 +385,7 @@ export default function Editor({ data, setData }) {
         {musicTab === "netease" && (
           <div className="space-y-3">
             <div className="bg-blue-900/10 border border-blue-900/30 p-2 rounded text-[10px] text-blue-200/70">
-              <p>提示：输入网易云<b>歌单 ID</b>（数字）。</p>
+              <p>提示：输入网易云<b>歌单 ID</b>（数字）。最多导入50首歌曲</p>
               <p>例如链接 `playlist?id=24381616` 中的 `24381616`。</p>
             </div>
             <div className="flex gap-2">
